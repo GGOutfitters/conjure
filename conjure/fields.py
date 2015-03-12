@@ -144,6 +144,15 @@ class DictField(BaseField):
 
         return Proxy(key, self)
 
+    def to_json(self, value):
+        json_dict = {}
+        for k,v in value.iteritems():
+            if isinstance(v, datetime.datetime):
+                json_dict[k] = int(time.mktime(v.timetuple()))
+            else:
+                json_dict[k] = v
+        return json_dict
+
 
 class ListField(List, BaseField):
     def __init__(self, field, default=None, **kwargs):
