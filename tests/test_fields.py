@@ -169,6 +169,21 @@ class FieldTest(unittest.TestCase):
         post.info = {'title': 'test'}
         post.validate()
 
+
+    def test_dict_datetime(self):
+        class BlogPost(documents.Document):
+            info = fields.DictField()
+
+        post = BlogPost()
+
+        post.info = {'timestamp': datetime.datetime.now()}
+        post.validate()
+
+        json_post = post.to_json()
+
+        self.assertTrue(isinstance(json_post['info']['timestamp'], int))
+
+
     def test_embedded_document_validation(self):
         class Comment(documents.EmbeddedDocument):
             content = fields.StringField()
