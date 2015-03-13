@@ -183,6 +183,12 @@ class FieldTest(unittest.TestCase):
 
         self.assertTrue(isinstance(json_post['info']['timestamp'], int))
 
+        post.info = None
+
+        #make sure it can serialize with a null dictfield
+        self.assertFalse('info' in post.to_json())
+
+        post.validate()
 
     def test_embedded_document_validation(self):
         class Comment(documents.EmbeddedDocument):

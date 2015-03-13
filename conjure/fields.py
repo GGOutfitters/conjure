@@ -145,6 +145,8 @@ class DictField(BaseField):
         return Proxy(key, self)
 
     def to_json(self, value):
+        if not value:
+            return None
         json_dict = {}
         for k,v in value.iteritems():
             if isinstance(v, datetime.datetime):
