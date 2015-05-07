@@ -190,6 +190,28 @@ class FieldTest(unittest.TestCase):
 
         post.validate()
 
+    def test_list_of_dict_query(self):
+        class BlogComment(documents.EmbeddedDocument):
+            data = fields.DictField()
+
+        class BlogPost(documents.Document):
+            comments = fields.ListField(fields.EmbeddedDocumentField(BlogComment))
+            
+        post = BlogPost()
+        
+        post.comments = [BlogComment(data={
+            'author': 'Sam Smith'
+             })]
+        
+        post.validate()
+
+        post.save()
+
+        self.assertTrue(BlogPost.objects.filter(BlogComment.data['author'] == 'Sam Smith').one() != None)
+
+        BlogPost.drop_collection()
+
+
     def test_embedded_document_validation(self):
         class Comment(documents.EmbeddedDocument):
             content = fields.StringField()

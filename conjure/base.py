@@ -268,7 +268,7 @@ class BaseField(Common):
         elif  'parent_field' in self.owner._meta:
             parent_field = self.owner._meta['parent_field']
 
-            if positional and parent_field.owner.__class__.__name__ == 'ListField':
+            if positional and parent_field.owner.__class__.__name__ == 'ListField' and self.__class__.__name__ != 'DictField':
                 sep = '.$.'
             else:
                 sep = '.'
