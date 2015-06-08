@@ -224,14 +224,14 @@ class BaseDocument(object):
         return j
 
     def validate(self):
-        fields = [(field, getattr(self, name)) for name, field in self._fields.iteritems()]
+        fields = [(field, getattr(self, name), name) for name, field in self._fields.iteritems()]
 
-        for field, value in fields:
+        for field, value, name in fields:
             if value is not None:
                 try:
                     field._validate(value)
                 except (ValueError, AttributeError, AssertionError):
-                    raise ValidationError('Invalid value for field of type "' +
+                    raise ValidationError('Invalid value for field %s of type "'%name +
                                                      field.__class__.__name__ + '"')
             elif not (isinstance(field, ObjectIdField) and field.name == 'id') and field.required:
                 raise ValidationError('Field "%s" is required' % field.name)
@@ -318,7 +318,7 @@ class BaseField(Common):
     def _validate(self, value):
         if self.choices:
             if value not in map(itemgetter(0), self.choices):
-                raise ValidationError('Value must be one of %s.' % unicode(self.choices))
+                raise ValidationError('Field %s: Value must be one of %s.' % (self.name, unicode(self.choices)))
 
         for validator in self.validators:
             validator(value)
