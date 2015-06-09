@@ -318,7 +318,7 @@ class BaseField(Common):
     def _validate(self, value):
         if self.choices:
             if value not in map(itemgetter(0), self.choices):
-                raise ValidationError('Field %s: Value must be one of %s.' % (self.name, unicode(self.choices)))
+                raise ValidationError('Field %s: Value %s must be one of %s.' % (self.name, value, unicode(self.choices)))
 
         for validator in self.validators:
             validator(value)
