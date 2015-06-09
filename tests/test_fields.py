@@ -410,6 +410,24 @@ class FieldTest(unittest.TestCase):
 
         self.assertEqual(shirt.get_size_display(), 'Small')
 
+    def test_choices_list(self):
+        class Shirt(documents.Document):
+            size = fields.StringField(choices=['Small', 'Medium', 'Large'])
+
+        Shirt.drop_collection()
+
+        shirt = Shirt()
+        shirt.validate()
+
+        shirt.size = 'Small'
+        shirt.validate()
+
+        shirt.size = 'Extra Small'
+        self.assertRaises(exceptions.ValidationError, shirt.validate)
+
+        Shirt.drop_collection()
+
+
     def test_map_field(self):
         class Group(documents.EmbeddedDocument):
             name = fields.StringField()

@@ -317,7 +317,11 @@ class BaseField(Common):
 
     def _validate(self, value):
         if self.choices:
-            if value not in map(itemgetter(0), self.choices):
+            if len(self.choices) and isinstance(self.choices[0], tuple):
+                choices_list = map(itemgetter(0), self.choices)
+            else:
+                choices_list = self.choices
+            if value not in choices_list:
                 raise ValidationError('Field %s: Value %s must be one of %s.' % (self.name, value, unicode(self.choices)))
 
         for validator in self.validators:
