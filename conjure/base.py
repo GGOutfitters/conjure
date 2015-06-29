@@ -201,7 +201,7 @@ class BaseDocument(object):
 
         return doc
 
-    def to_json(self, only=None, methods=None):
+    def to_json(self, only=None, methods=None, external=False):
         j = {}
 
         only = only or self._fields.keys()
@@ -210,6 +210,9 @@ class BaseDocument(object):
             field = self._fields[field_name]
 
             if not field.serialize:
+                continue
+
+            if field.internal and external:
                 continue
 
             value = field.to_json(getattr(self, field_name))
@@ -248,7 +251,7 @@ class BaseDocument(object):
 
 class BaseField(Common):
     def __init__(self, verbose_name=None, db_field=None, required=False, default=None, validators=None, choices=None,
-                 editable=True, help_text='', serialize=True):
+                 editable=True, help_text='', serialize=True, internal=False):
 
         self.owner = None
         self.name = None
@@ -261,6 +264,7 @@ class BaseField(Common):
         self.editable = editable
         self.help_text = help_text
         self.serialize = serialize
+        self.internal = internal
 
     def get_key(self, positional=False):
         if isinstance(self.owner, BaseField):

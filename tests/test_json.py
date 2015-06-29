@@ -52,3 +52,25 @@ class JsonTest(unittest.TestCase):
 
         User.drop_collection()
         BlogPost.drop_collection()
+
+    def test_internal_json(self):
+        class User(conjure.Document):
+            name = conjure.StringField()
+            age = conjure.IntegerField()
+            salary = conjure.FloatField(internal=True)
+
+        user = User(name='Andrew',
+                    age=30,
+                    salary=50000.25)
+
+        user_json_internal = user.to_json()
+        user_json_external = user.to_json(external=True)
+        
+        self.assertEqual(user.name, user_json_internal['name'])
+        self.assertEqual(user.name, user_json_external['name'])
+
+        self.assertEqual(user.age, user_json_internal['age'])
+        self.assertEqual(user.age, user_json_external['age'])
+
+        self.assertEqual(user.salary, user_json_internal['salary'])
+        self.assertFalse('salary' in user_json_external)
