@@ -288,7 +288,7 @@ class BaseField(Common):
         value = instance._data.get(self.name)
 
         if value is None:
-            value = self.get_default()
+            value = copy.deepcopy(self.get_default())
             instance._data[self.name] = value
 
         return value

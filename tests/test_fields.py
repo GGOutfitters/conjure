@@ -190,6 +190,47 @@ class FieldTest(unittest.TestCase):
 
         post.validate()
 
+    def test_defaulting(self):
+        class FlagContainer(documents.Document):
+            id = fields.StringField(db_field='_id')
+            flags = fields.DictField(default = {})
+            class Meta:
+                collection = 'flag_container'
+
+        class FlagContainer2(documents.Document):
+            id = fields.StringField(db_field='_id')
+            class Meta:
+                collection = 'flag_container'
+
+        FlagContainer.drop_collection()
+
+        FlagContainer2(id='a').save()
+        FlagContainer2(id='b').save()
+        FlagContainer2(id='c').save()
+        FlagContainer2(id='d').save()
+
+        fc = FlagContainer.objects.filter(FlagContainer.id=='a').one()
+        fc.flags['flag_a'] = True
+        fc.save()
+        self.assertEqual(len(fc.flags), 1)
+
+        fc = FlagContainer.objects.filter(FlagContainer.id=='b').one()
+        fc.flags['flag_b'] = True
+        fc.save()
+        self.assertEqual(len(fc.flags), 1)
+
+        fc = FlagContainer.objects.filter(FlagContainer.id=='c').one()
+        fc.flags['flag_c'] = True
+        fc.save()
+        self.assertEqual(len(fc.flags), 1)
+
+        fc = FlagContainer.objects.filter(FlagContainer.id=='d').one()
+        fc.flags['flag_d'] = True
+        fc.save()
+        self.assertEqual(len(fc.flags), 1)
+
+        FlagContainer.drop_collection()
+
     def test_list_of_dict_query(self):
         class BlogComment(documents.EmbeddedDocument):
             data = fields.DictField()
