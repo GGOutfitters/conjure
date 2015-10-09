@@ -215,7 +215,7 @@ class BaseDocument(object):
             if field.internal and external:
                 continue
 
-            value = field.to_json(getattr(self, field_name))
+            value = field.to_json(getattr(self, field_name), external=external)
 
             if value is not None:
                 j[field_name] = value
@@ -313,7 +313,7 @@ class BaseField(Common):
     def to_mongo(self, value):
         return self.to_python(value)
 
-    def to_json(self, value):
+    def to_json(self, value, external=False):
         return self.to_python(value)
 
     def validate(self, value):
@@ -366,7 +366,7 @@ class ObjectIdField(BaseField):
 
         return value
 
-    def to_json(self, value):
+    def to_json(self, value, external=False):
         if isinstance(value, bson.objectid.ObjectId):
             return str(value)
 

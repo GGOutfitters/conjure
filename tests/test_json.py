@@ -54,14 +54,28 @@ class JsonTest(unittest.TestCase):
         BlogPost.drop_collection()
 
     def test_internal_json(self):
+        class UserContacts(conjure.EmbeddedDocument):
+            emergency = conjure.StringField(internal=True)
+            manager = conjure.StringField()
+
+        class UserPreferences(conjure.EmbeddedDocument):
+            email_enabled = conjure.BooleanField()
+
         class User(conjure.Document):
             name = conjure.StringField()
             age = conjure.IntegerField()
             salary = conjure.FloatField(internal=True)
+            prefs = conjure.EmbeddedDocumentField(UserPreferences, internal=True)
+            contacts = conjure.EmbeddedDocumentField(UserContacts)
+            
 
         user = User(name='Andrew',
                     age=30,
-                    salary=50000.25)
+                    salary=50000.25,
+                    prefs = UserPreferences(email_enabled=True),
+                    contacts = UserContacts(emergency='e_contact',
+                                            manager='mgr_contact')
+        )
 
         user_json_internal = user.to_json()
         user_json_external = user.to_json(external=True)
@@ -74,3 +88,9 @@ class JsonTest(unittest.TestCase):
 
         self.assertEqual(user.salary, user_json_internal['salary'])
         self.assertFalse('salary' in user_json_external)
+
+        self.assertEqual(user.prefs.email_enabled, user_json_internal['prefs']['email_enabled'])
+        self.assertFalse('prefs' in user_json_external)
+
+        self.assertEqual(user.contacts.emergency, user_json_internal['contacts']['emergency'])
+        self.assertFalse('emergency' in user_json_external['contacts'])

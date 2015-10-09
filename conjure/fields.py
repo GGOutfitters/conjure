@@ -114,7 +114,7 @@ class DateTimeField(BaseField):
     def validate(self, value):
         assert isinstance(value, datetime.datetime)
 
-    def to_json(self, value):
+    def to_json(self, value, external=False):
         if isinstance(value, datetime.datetime):
             return int(time.mktime(value.timetuple()))
 
@@ -144,7 +144,7 @@ class DictField(BaseField):
 
         return Proxy(key, self)
 
-    def to_json(self, value):
+    def to_json(self, value, external=False):
         if not value:
             return self.get_default()
         json_dict = {}
@@ -200,8 +200,8 @@ class ListField(List, BaseField):
     def to_mongo(self, value):
         return [self.field.to_mongo(item) for item in value]
 
-    def to_json(self, value):
-        return [self.field.to_json(item) for item in value]
+    def to_json(self, value, external=False):
+        return [self.field.to_json(item, external=external) for item in value]
 
     def validate(self, value):
         if not isinstance(value, (list, tuple)):
@@ -251,9 +251,9 @@ class MapField(BaseField):
     def to_mongo(self, value):
         return dict((k, self.field.to_mongo(item)) for k, item in value.iteritems())
 
-    def to_json(self, value):
+    def to_json(self, value, external=False):
         value = value or {}
-        return dict((k, self.field.to_json(item)) for k, item in value.iteritems())
+        return dict((k, self.field.to_json(item, external=external)) for k, item in value.iteritems())
 
     def validate(self, value):
         if not isinstance(value, dict):
@@ -336,9 +336,9 @@ class EmbeddedDocumentField(BaseField):
     def to_mongo(self, value):
         return self.document.to_mongo(value)
 
-    def to_json(self, value):
+    def to_json(self, value, external=False):
         if isinstance(value, self.document):
-            return value.__class__.to_json(value)
+            return value.__class__.to_json(value, external=external)
 
     def validate(self, value):
         if not isinstance(value, self.document):
@@ -409,9 +409,9 @@ class ReferenceField(BaseField, Reference):
 
         return field.to_mongo(doc_id)
 
-    def to_json(self, value):
+    def to_json(self, value, external=False):
         if isinstance(value, Document):
-            return self.document_cls.to_json(value)
+            return self.document_cls.to_json(value, external=external)
 
     def validate(self, value):
         if isinstance(value, Document):
