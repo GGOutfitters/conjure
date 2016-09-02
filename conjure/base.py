@@ -235,7 +235,7 @@ class BaseDocument(object):
                 new_val, field_deltas = field.from_json(j[field_name], getattr(self, field_name))
                 deltas.update({field_name: field_deltas})
                 setattr(self, field_name, new_val)
-            else:
+            elif hasattr(self, field_name):
                 delattr(self, field_name)
                 deltas[field_name] = 'deleted'
 

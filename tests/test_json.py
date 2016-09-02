@@ -138,9 +138,39 @@ class JsonTest(unittest.TestCase):
                                                note='some note')]
                     
         )
+        
 
-        print user.to_json()
+        #check that marshal/unmarshal returns the same json
+        old_json = user.to_json()
+        user.from_json(user.to_json())
+        new_json = user.to_json()
+        self.assertEqual(old_json, new_json)
 
-        print user.from_json(user.to_json())
 
-        print user.to_json()
+        #check that removing keys from json removes them
+        #from the generated object
+        mod_json = user.to_json()
+        del mod_json['favorite_foods'][0]
+        del mod_json['favorite_numbers'][2]
+        del mod_json['contacts']['emergency']
+        del mod_json['prefs']['key1']
+
+        delta = user.from_json(mod_json)
+
+        self.assertTrue('chicken' not in user.favorite_foods)
+        self.assertTrue(2 not in user.favorite_numbers)
+        self.assertTrue(user.contacts.emergency is None)
+        self.assertTrue('key1' not in user.prefs)
+
+
+        #test adding new fields
+        mod_json['history'].append(mod_json['history'][0])
+        mod_json['history'][1]['note']='new note'
+        mod_json['favorite_foods'].append('tacos')
+        mod_json['favorite_numbers'].append(42)
+        
+        delta = user.from_json(mod_json)
+
+        self.assertTrue(user.history[1].note == 'new note')
+        self.assertTrue(user.favorite_foods[-1] == 'tacos')
+        self.assertTrue(user.favorite_numbers[-1] == 42)

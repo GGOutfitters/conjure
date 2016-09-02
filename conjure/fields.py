@@ -218,6 +218,11 @@ class ListField(List, BaseField):
 
         #first trim cur_val to the length of input
         del cur_val[len(j):]
+        
+        #expand cur_val to the length of input
+        while len(cur_val) < len(j):
+            cur_val.append(None)
+
         #TODO: make deltas for anything deleted
 
         for i, val in enumerate(j):
@@ -367,13 +372,16 @@ class EmbeddedDocumentField(BaseField):
     def from_json(self, j, cur_val):
         deltas = {}
 
+        if not cur_val:
+            cur_val = self.document()
+
         for field_name in self.document._fields.keys():
             field = self.document._fields[field_name]
 
             if field_name in j:
                 new_val, field_deltas = field.from_json(j[field_name], getattr(self.document, field_name))
 
-                if new_val != cur_val._data[field_name]:
+                if field_name not in cur_val._data or new_val != cur_val._data[field_name]:
                     deltas.update({field_name: field_deltas})
                     cur_val._data[field_name] = new_val
             else:
