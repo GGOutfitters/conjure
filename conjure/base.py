@@ -226,6 +226,27 @@ class BaseDocument(object):
 
         return j
 
+    def from_json(self, j):
+        deltas = {}
+        for field_name in self._fields.keys():
+            field = self._fields[field_name]
+
+            if field_name in j:
+                new_val, field_deltas = field.from_json(j[field_name], getattr(self, field_name))
+                deltas.update({field_name: field_deltas})
+                setattr(self, field_name, new_val)
+            else:
+                delattr(self, field_name)
+                deltas[field_name] = 'deleted'
+
+        for field_name in j.keys():
+            if field_name not in self._fields.keys():
+                deltas[field_name] = 'unknown'
+
+        return deltas
+            
+
+
     def validate(self):
         fields = [(field, getattr(self, name), name) for name, field in self._fields.iteritems()]
 
@@ -296,6 +317,9 @@ class BaseField(Common):
     def __set__(self, instance, value):
         instance._data[self.name] = value
 
+    def __delete__(self, instance):
+        del instance._data[self.name]
+
     def has_default(self):
         return self.default is not None
 
@@ -315,6 +339,13 @@ class BaseField(Common):
 
     def to_json(self, value, external=False):
         return self.to_python(value)
+
+    def from_json(self, j, cur_val):
+        delta = {}
+        if cur_val != j:
+            delta = {'old': cur_val, 'new': j}
+        return j, delta
+        pass
 
     def validate(self, value):
         pass

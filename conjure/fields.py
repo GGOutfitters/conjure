@@ -118,6 +118,16 @@ class DateTimeField(BaseField):
         if isinstance(value, datetime.datetime):
             return int(time.mktime(value.timetuple()))
 
+    def from_json(self, j, cur_val):
+        deltas = {}
+
+        dt = datetime.datetime.fromtimestamp(j)
+
+        if dt != cur_val:
+            deltas = {'old': cur_val, 'new': dt}
+
+        return dt, deltas
+
 
 class DictField(BaseField):
     def validate(self, value):
@@ -202,6 +212,20 @@ class ListField(List, BaseField):
 
     def to_json(self, value, external=False):
         return [self.field.to_json(item, external=external) for item in value]
+
+    def from_json(self, j, cur_val):
+        deltas = {}
+
+        #first trim cur_val to the length of input
+        del cur_val[len(j):]
+        #TODO: make deltas for anything deleted
+
+        for i, val in enumerate(j):
+            new_val, delta = self.field.from_json(val, cur_val[i] if i < len(cur_val) else None)
+            cur_val[i] = new_val
+            deltas[i]=delta
+
+        return cur_val, deltas
 
     def validate(self, value):
         if not isinstance(value, (list, tuple)):
@@ -339,6 +363,29 @@ class EmbeddedDocumentField(BaseField):
     def to_json(self, value, external=False):
         if isinstance(value, self.document):
             return value.__class__.to_json(value, external=external)
+
+    def from_json(self, j, cur_val):
+        deltas = {}
+
+        for field_name in self.document._fields.keys():
+            field = self.document._fields[field_name]
+
+            if field_name in j:
+                new_val, field_deltas = field.from_json(j[field_name], getattr(self.document, field_name))
+
+                if new_val != cur_val._data[field_name]:
+                    deltas.update({field_name: field_deltas})
+                    cur_val._data[field_name] = new_val
+            else:
+                del cur_val._data[field_name]
+                deltas[field_name] = 'deleted'
+
+        for field_name in j.keys():
+            if field_name not in self.document._fields.keys():
+                deltas[field_name] = 'unknown'
+
+        return cur_val, deltas
+
 
     def validate(self, value):
         if not isinstance(value, self.document):

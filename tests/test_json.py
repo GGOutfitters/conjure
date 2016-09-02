@@ -1,6 +1,7 @@
 import unittest
 import conjure
 import json
+import datetime
 
 class JsonTest(unittest.TestCase):
     def test_json(self):
@@ -94,3 +95,52 @@ class JsonTest(unittest.TestCase):
 
         self.assertEqual(user.contacts.emergency, user_json_internal['contacts']['emergency'])
         self.assertFalse('emergency' in user_json_external['contacts'])
+
+
+
+    def test_unmarshal(self):
+        class UserHistoryItem(conjure.EmbeddedDocument):
+            timestamp = conjure.DateTimeField()
+            note = conjure.StringField()
+
+        class UserContacts(conjure.EmbeddedDocument):
+            emergency = conjure.StringField()
+            manager = conjure.StringField()
+
+        class User(conjure.Document):
+            name = conjure.StringField()
+            age = conjure.IntegerField()
+            salary = conjure.FloatField()
+            email = conjure.EmailField()
+            is_active = conjure.BooleanField()
+            create_time = conjure.DateTimeField()
+            prefs = conjure.DictField()
+
+            contacts = conjure.EmbeddedDocumentField(UserContacts)
+
+            favorite_foods = conjure.ListField(conjure.StringField())
+            favorite_numbers = conjure.ListField(conjure.IntegerField())
+            history = conjure.ListField(conjure.EmbeddedDocumentField(UserHistoryItem))
+            
+
+        user = User(name='Andrew',
+                    age=30,
+                    salary=50000.25,
+                    email='atodd@ggoutfitters.com',
+                    is_active=True,
+                    create_time=datetime.datetime.now(),
+                    prefs = {'key1':'val1', 'key2':'val2'},
+                    contacts = UserContacts(emergency='e_contact',
+                                            manager='mgr_contact'),
+                    favorite_foods = ['chicken','veal','lamb'],
+                    favorite_numbers = [1,1,2,3,5,8,13,21],
+                    history = [UserHistoryItem(timestamp=datetime.datetime.now(),
+                                               note='some note')]
+                    
+        )
+
+        print user.to_json()
+
+        print user.from_json(user.to_json())
+
+        print user.to_json()

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from conjure import documents, fields, exceptions
 import unittest
 import datetime
@@ -12,6 +13,14 @@ class FieldTest(unittest.TestCase):
         user = User(name='Test User')
         self.assertEqual(user.age, 30)
         self.assertEqual(user._id, 'test')
+
+    def test_unicode(self):
+        class User(documents.Document):
+            name = fields.StringField(required=True)
+
+        user = User(name=u'Test User ©')
+        user.save()
+        self.assertEqual(user.name, u'Test User ©')
 
     def test_required_values(self):
         class User(documents.Document):
