@@ -5,7 +5,7 @@ DESCRIPTION = "A MongoDB object mapper inspired by Django models and SQLAlchemy'
 with open('README') as f:
     LONG_DESCRIPTION = f.read()
 
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 
 CLASSIFIERS = [
     'Intended Audience :: Developers',
