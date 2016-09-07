@@ -379,7 +379,8 @@ class EmbeddedDocumentField(BaseField):
             field = self.document._fields[field_name]
 
             if field_name in j:
-                new_val, field_deltas = field.from_json(j[field_name], getattr(self.document, field_name))
+
+                new_val, field_deltas = field.from_json(j[field_name], getattr(cur_val, field_name))
 
                 if field_name not in cur_val._data or new_val != cur_val._data[field_name]:
                     deltas.update({field_name: field_deltas})

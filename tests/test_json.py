@@ -102,6 +102,7 @@ class JsonTest(unittest.TestCase):
         class UserHistoryItem(conjure.EmbeddedDocument):
             timestamp = conjure.DateTimeField()
             note = conjure.StringField()
+            tags = conjure.ListField(conjure.StringField())
 
         class UserContacts(conjure.EmbeddedDocument):
             emergency = conjure.StringField()
@@ -135,7 +136,9 @@ class JsonTest(unittest.TestCase):
                     favorite_foods = ['chicken','veal','lamb'],
                     favorite_numbers = [1,1,2,3,5,8,13,21],
                     history = [UserHistoryItem(timestamp=datetime.datetime.now(),
-                                               note='some note')]
+                                               note='some note',
+                                               tags=['a','b','c']
+                                           )]
                     
         )
         
