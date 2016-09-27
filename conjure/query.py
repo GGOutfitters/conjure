@@ -95,15 +95,15 @@ class Query(object):
 
     def find(self, *expressions):
         if len(expressions) == 1 and isinstance(expressions[0], dict):
-            return self._collection.find(expressions[0], fields=self._fields)
+            return self._collection.find(expressions[0], projection=self._fields)
 
-        return self.filter(*expressions)._collection.find(self._compile_spec(), fields=self._fields)
+        return self.filter(*expressions)._collection.find(self._compile_spec(), projection=self._fields)
 
     def find_one(self, *expressions):
         if len(expressions) == 1 and isinstance(expressions[0], dict):
-            return self._collection.find_one(expressions[0], fields=self._fields)
+            return self._collection.find_one(expressions[0], projection=self._fields)
 
-        return self.filter(*expressions)._collection.find_one(self._compile_spec(), fields=self._fields)
+        return self.filter(*expressions)._collection.find_one(self._compile_spec(), projection=self._fields)
 
     def filter(self, *expressions):
         for expression in expressions:
@@ -133,7 +133,7 @@ class Query(object):
         return self._eagerload(self._document_cls.to_python(self._one()))
 
     def _one(self):
-        return self._collection.find_one(self._compile_spec(), fields=self._fields)
+        return self._collection.find_one(self._compile_spec(), projection=self._fields)
 
     def first(self, *expressions):
         try:
@@ -221,23 +221,23 @@ class Query(object):
 
         return plan
 
-    def delete(self, safe=False):
-        return self._collection.remove(self._compile_spec(), safe=safe)
+    def delete(self):
+        return self._collection.remove(self._compile_spec())
 
-    def _update(self, update, safe, upsert, multi):
+    def _update(self, update, upsert, multi):
         try:
-            self._collection.update(self._compile_spec(), update, safe=safe, upsert=upsert, multi=multi)
+            self._collection.update(self._compile_spec(), update, upsert=upsert, multi=multi)
         except pymongo.errors.OperationFailure, err:
             raise OperationError(unicode(err))
 
-    def update(self, update_spec, safe=False):
-        self._update(update_spec.compile(), safe, False, True)
+    def update(self, update_spec):
+        self._update(update_spec.compile(), False, True)
 
-    def update_one(self, update_spec, safe=False):
-        self._update(update_spec.compile(), safe, False, False)
+    def update_one(self, update_spec):
+        self._update(update_spec.compile(), False, False)
 
-    def upsert(self, update_spec, safe=False):
-        self._update(update_spec.compile(), safe, True, False)
+    def upsert(self, update_spec):
+        self._update(update_spec.compile(), True, False)
 
     def group(self, key, initial, reduce, finalize=None):
         return self._collection.group(key, self._compile_spec(), initial, reduce, finalize)
@@ -259,7 +259,7 @@ class Query(object):
     @property
     def _cursor(self):
         if self._pymongo_cursor is None:
-            self._pymongo_cursor = self._collection.find(self._compile_spec(), fields=self._fields)
+            self._pymongo_cursor = self._collection.find(self._compile_spec(), projection=self._fields)
 
             for key_list in self._deferred_sort:
                 self.sort(key_list)

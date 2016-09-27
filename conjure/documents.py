@@ -12,7 +12,7 @@ class Document(BaseDocument):
     id = ObjectIdField(db_field='_id')
     objects = Query(None, None)
 
-    def save(self, safe=True, insert=False):
+    def save(self, insert=False):
         self.validate()
 
         doc = self.to_mongo()
@@ -21,20 +21,20 @@ class Document(BaseDocument):
             collection = self.__class__.objects._collection
 
             if insert:
-                object_id = collection.insert(doc, safe=safe)
+                object_id = collection.insert(doc)
             else:
-                object_id = collection.save(doc, safe=safe)
+                object_id = collection.save(doc)
         except pymongo.errors.OperationFailure, err:
             raise OperationError(unicode(err))
 
         self['id'] = object_id
 
-    def delete(self, safe=False):
+    def delete(self):
         #noinspection PyUnresolvedReferences
         object_id = self._fields['id'].to_mongo(self.id)
 
         try:
-            self.__class__.objects.filter_by(id=object_id).delete(safe=safe)
+            self.__class__.objects.filter_by(id=object_id).delete()
         except pymongo.errors.OperationFailure, err:
             raise OperationError(unicode(err))
 

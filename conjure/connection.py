@@ -19,7 +19,7 @@ def _get_connection(hosts):
 
     if connection is None:
         try:
-            connection = _connections[key] = MongoClient(hosts, use_greenlets=gevent is not None)
+            connection = _connections[key] = MongoClient(hosts)
         except Exception as e:
             raise ConnectionError(e.message)
 
