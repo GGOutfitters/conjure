@@ -391,8 +391,9 @@ class EmbeddedDocumentField(BaseField):
                     deltas.update({field_name: field_deltas})
                     cur_val._data[field_name] = new_val
             else:
-                del cur_val._data[field_name]
-                deltas[field_name] = 'deleted'
+                if field_name in cur_val._data:
+                    del cur_val._data[field_name]
+                    deltas[field_name] = 'deleted'
 
         for field_name in j.keys():
             if field_name not in self.document._fields.keys():
