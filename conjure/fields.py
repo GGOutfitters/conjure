@@ -31,6 +31,11 @@ class StringField(String, BaseField):
             return unicode(value)
         return ''
 
+    def to_json(self, value, external=False):
+        if value is not None:
+            return self.to_python(value)
+        return None
+
     def validate(self, value):
         assert isinstance(value, (str, unicode))
 

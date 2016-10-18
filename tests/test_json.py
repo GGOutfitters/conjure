@@ -49,7 +49,7 @@ class JsonTest(unittest.TestCase):
         post3.likes = [author2]
         post3.save()
 
-        self.assertEqual(json.dumps(post2.to_json()), """{"content": "Test Post #2", "author": {"name": "Test User #2", "id": "4ff8c1d20d196d04cc000029"}, "id": "4ff8c1d20d196d04cc000031", "comments": [{"message": "", "by": {"name": "Test User #1", "id": "4ff8c1d20d196d04cc000028"}}, {"message": "", "by": {"name": "Test User #2", "id": "4ff8c1d20d196d04cc000029"}}], "likes": [{"name": "Test User #1", "id": "4ff8c1d20d196d04cc000028"}]}""")
+        self.assertEqual(json.dumps(post2.to_json()), """{"content": "Test Post #2", "author": {"name": "Test User #2", "id": "4ff8c1d20d196d04cc000029"}, "id": "4ff8c1d20d196d04cc000031", "comments": [{"by": {"name": "Test User #1", "id": "4ff8c1d20d196d04cc000028"}}, {"by": {"name": "Test User #2", "id": "4ff8c1d20d196d04cc000029"}}], "likes": [{"name": "Test User #1", "id": "4ff8c1d20d196d04cc000028"}]}""")
 
         User.drop_collection()
         BlogPost.drop_collection()
