@@ -10,8 +10,12 @@ except ImportError:
     gevent = None
 
 
-def _get_connection(hosts):
+def _get_connection(uri):
     global _connections
+
+    parsed_uri = parse_uri(uri)
+
+    hosts = parsed_uri['nodelist']
 
     hosts = ['%s:%d' % host for host in hosts]
     key = ','.join(hosts)
@@ -19,7 +23,7 @@ def _get_connection(hosts):
 
     if connection is None:
         try:
-            connection = _connections[key] = MongoClient(hosts)
+            connection = _connections[key] = MongoClient(uri)
         except Exception as e:
             raise ConnectionError(e.message)
 
@@ -29,13 +33,12 @@ def _get_connection(hosts):
 def connect(uri):
     parsed_uri = parse_uri(uri)
 
-    hosts = parsed_uri['nodelist']
     username = parsed_uri['username']
     password = parsed_uri['password']
     database = parsed_uri['database']
 
-    db = _get_connection(hosts)[database]
-
+    db = _get_connection(uri)[database]
+    
     if username and password:
         db.authenticate(username, password)
 
