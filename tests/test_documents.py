@@ -1,3 +1,4 @@
+import conjure
 import unittest
 import datetime
 from conjure.documents import Document, EmbeddedDocument
@@ -30,6 +31,126 @@ class DocumentTest(unittest.TestCase):
         fields = list(User())
         self.assertTrue('name' in fields and 'age' in fields)
         self.assertFalse(hasattr(Document, '_fields'))
+
+    def test_set_field(self):
+
+        class UserHistoryDetails(conjure.EmbeddedDocument):
+            action = conjure.StringField()
+
+        class UserHistoryItem(conjure.EmbeddedDocument):
+            timestamp = conjure.DateTimeField()
+            note = conjure.StringField()
+            tags = conjure.ListField(conjure.StringField())
+            details = conjure.EmbeddedDocumentField(UserHistoryDetails)
+
+        class ContactAddress(conjure.EmbeddedDocument):
+            street = conjure.StringField()
+
+        class UserContacts(conjure.EmbeddedDocument):
+            emergency = conjure.StringField()
+            manager = conjure.StringField()
+            settings = conjure.DictField()
+            address = conjure.EmbeddedDocumentField(ContactAddress)
+            create_time = conjure.DateTimeField()
+
+        class UserHealth(conjure.EmbeddedDocument):
+            height = conjure.StringField()
+            weight = conjure.StringField()
+
+        class User(conjure.Document):
+            name = conjure.StringField()
+            age = conjure.IntegerField()
+            salary = conjure.FloatField()
+            email = conjure.EmailField()
+            is_active = conjure.BooleanField()
+            create_time = conjure.DateTimeField()
+            prefs = conjure.DictField()
+            contacts = conjure.EmbeddedDocumentField(UserContacts)
+            health_info = conjure.EmbeddedDocumentField(UserHealth)
+            favorite_foods = conjure.ListField(conjure.StringField())
+            favorite_numbers = conjure.ListField(conjure.IntegerField())
+            favorite_settings = conjure.ListField(conjure.DictField())
+            history = conjure.ListField(conjure.EmbeddedDocumentField(UserHistoryItem))
+
+        user = User(name='Andrew',
+                    age=30,
+                    salary=50000.25,
+                    email='atodd@ggoutfitters.com',
+                    is_active=True,
+                    create_time=datetime.datetime.now(),
+                    prefs={'key1': 'val1', 'key2': 'val2'},
+                    favorite_numbers=[1, 1, 2, 3, 5, 8, 13, 21],
+                    favorite_foods=['chicken', 'ham', 'lamb'],
+                    favorite_settings=[{'test1': 'val1', 'test2': 'val2'}],
+                    history=[UserHistoryItem(timestamp=datetime.datetime.now(),
+                                             note='some note',
+                                             tags=['a', 'b', 'c']
+                                             ),
+                             UserHistoryItem(timestamp=datetime.datetime.now(),
+                                             note='another note',
+                                             tags=['x', 'y', 'z']
+                                             )
+                             ]
+                    )
+
+        user.set_field('name', 'Andy')
+        self.assertTrue(user.name == 'Andy')
+
+        user.set_field('age', '25')
+        self.assertTrue(user.age == 25)
+
+        user.set_field('age', 25)
+        self.assertTrue(user.age == 25)
+
+        user.set_field('salary', '25000')
+        self.assertTrue(user.salary == 25000.0)
+
+        user.set_field('prefs.key3', 'val3')
+        self.assertTrue(user.prefs == {'key1': 'val1', 'key2': 'val2', 'key3': 'val3'})
+
+        user.set_field('prefs.key2', 'another val')
+        self.assertTrue(user.prefs == {'key1': 'val1', 'key2': 'another val', 'key3': 'val3'})
+
+        user.set_field('contacts.emergency', 'hospital')
+        self.assertTrue(user.contacts.emergency == 'hospital')
+
+        user.set_field('contacts.settings.set1', 'on')
+        self.assertTrue(user.contacts.settings == {'set1': 'on'})
+
+        user.set_field('health_info.height', 'tall')
+        self.assertTrue(user.health_info.height == 'tall')
+
+        user.set_field('contacts.address.street', 'Forest Glen')
+        self.assertTrue(user.contacts.address.street == 'Forest Glen')
+
+        user.set_field('contacts.create_time', '12/20/1989')
+        self.assertTrue(type(user.contacts.create_time) == datetime.datetime)
+
+        user.set_field('favorite_settings.0.set1', 'setting val')
+        self.assertTrue(user.favorite_settings == [{'test1': 'val1', 'test2': 'val2', 'set1': 'setting val'}])
+
+        user.set_field('favorite_settings.0.test1', 'testval1')
+        self.assertTrue(user.favorite_settings == [{'test1': 'testval1', 'test2': 'val2', 'set1': 'setting val'}])
+
+        user.set_field('favorite_foods.1', 'pasta')
+        self.assertTrue(user.favorite_foods == ['chicken', 'pasta', 'lamb'])
+
+        user.set_field('history.0.tags.1', 'turkey')
+        self.assertTrue(user.history[0].tags == ['a', 'turkey', 'c'])
+
+        user.set_field('history.1.details.action', 'edited email')
+        self.assertTrue(user.history[1].details.action == 'edited email')
+
+        user.set_field('history.0.note', 'this is a note')
+        self.assertTrue(user.history[0].note == 'this is a note')
+
+        def invaled_index_test():
+            user.set_field('history.0.tags.3', 'pencil')
+        self.assertRaises(IndexError, invaled_index_test)
+
+        def invalid_path_test():
+            user.set_field('this_does_not_exist', 'thing')
+        self.assertRaises(KeyError, invalid_path_test)
 
     def test_get_superclasses(self):
         class Animal(Document): pass

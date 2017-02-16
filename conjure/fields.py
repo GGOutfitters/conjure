@@ -5,6 +5,7 @@ from .exceptions import ValidationError
 from .documents import Document
 import re
 import datetime
+import dateutil.parser
 import copy
 import functools
 
@@ -84,6 +85,9 @@ class IntegerField(Number, BaseField):
         if self.max_value is not None and value > self.max_value:
             raise ValidationError('Integer field "%s" value is too large (%s max)' % (self.name, self.max_value))
 
+    @classmethod
+    def from_val(cls, v):
+        return int(v)
 
 class FloatField(IntegerField):
     def to_python(self, value):
@@ -106,6 +110,9 @@ class FloatField(IntegerField):
         if self.max_value is not None and value > self.max_value:
             raise ValidationError('Float field "%s" value is too large (%s max)' % (self.name, self.max_value))
 
+    @classmethod
+    def from_val(cls, v):
+        return float(v)
 
 class BooleanField(BaseField):
     def to_python(self, value):
@@ -133,6 +140,26 @@ class DateTimeField(BaseField):
 
         return dt, deltas
 
+    @classmethod
+    def from_val(cls, v):
+        if not v:
+            return None
+        elif v == 'now':
+            return datetime.datetime.now()
+        elif type(v) is str:
+            try:
+                date = dateutil.parser.parse(v)
+                return date
+            except:
+                return v
+        elif type(v) is int:
+            try:
+                date = datetime.datetime.fromtimestamp(v)
+                return date
+            except:
+                return v
+        else:
+            return v
 
 class DictField(BaseField):
     def validate(self, value):
@@ -169,6 +196,9 @@ class DictField(BaseField):
             else:
                 json_dict[k] = v
         return json_dict
+
+    def new_instance(self):
+        return {}
 
 
 class ListField(List, BaseField):
@@ -236,6 +266,28 @@ class ListField(List, BaseField):
             deltas[i]=delta
 
         return cur_val, deltas
+
+    def set_field(self, k, v, cur_val):
+        if not cur_val:
+            cur_val = self.document()
+        k = k.split('.', 1)
+        field = k[0]
+        if type(getattr(cur_val, field)) is list:
+            dot_string = k[1]
+            spl = dot_string.split('.', 1)
+            index = int(spl[0])
+            if len(spl) == 2:
+                cur_val._fields[field].set_field(spl[1], v, getattr(cur_val, field)[index])
+            else:
+                getattr(cur_val, field)[index] = v
+                setattr(cur_val, field, getattr(cur_val, field))
+        elif len(k) == 2:
+            dot_string = k[1]
+            if getattr(cur_val, field) is None:
+                setattr(cur_val, field, cur_val._fields[field].document())
+            cur_val._fields[field].set_field(dot_string, v, getattr(cur_val, k[0]))
+        else:
+            setattr(cur_val, field, cur_val._fields[field].from_val(v))
 
     def validate(self, value):
         if not isinstance(value, (list, tuple)):
@@ -367,6 +419,9 @@ class EmbeddedDocumentField(BaseField):
 
         return value
 
+    def new_instance(self):
+        return self.document()
+
     def to_mongo(self, value):
         return self.document.to_mongo(value)
 
@@ -401,6 +456,22 @@ class EmbeddedDocumentField(BaseField):
 
         return cur_val, deltas
 
+    def set_field(self, k, v, cur_val):
+        if not cur_val:
+            cur_val = self.document()
+        k = k.split('.', 1)
+        field = k[0]
+        if len(k) == 2:
+            dot_string = k[1]
+            if getattr(cur_val, field) is None:
+                setattr(cur_val, field, cur_val._fields[field].new_instance())
+            if type(getattr(cur_val, field)) is dict:
+                getattr(cur_val, field)[k[1]] = v
+                setattr(cur_val, field, getattr(cur_val, field))
+            else:
+                cur_val._fields[field].set_field(dot_string, v, getattr(cur_val, k[0]))
+        else:
+            setattr(cur_val, field, cur_val._fields[field].from_val(v))
 
     def validate(self, value):
         if not isinstance(value, self.document):

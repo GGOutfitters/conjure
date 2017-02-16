@@ -244,8 +244,33 @@ class BaseDocument(object):
                 deltas[field_name] = 'unknown'
 
         return deltas
-            
 
+    def set_field(self, k, v):
+        k = k.split('.', 1)
+        field = k[0]
+        if len(k) == 2:
+            dot_string = k[1]
+            if getattr(self, field) is None:
+                setattr(self, field, self._fields[field].new_instance())
+            if type(getattr(self, field)) is list:
+                spl = dot_string.split('.', 1)
+                index = int(spl[0])
+                if len(spl) == 2:
+                    if len(spl[1].split('.',1)) == 2:
+                        self._fields[field].set_field(spl[1], v, getattr(self, field)[index])
+                    else:
+                        getattr(self, field)[index][spl[1]] = v
+                        setattr(self, field, getattr(self, field))
+                else:
+                    getattr(self, field)[index] = v
+                    setattr(self, field, getattr(self, field))
+            elif type(getattr(self, field)) is dict:
+                getattr(self, field)[k[1]] = v
+                setattr(self, field, getattr(self, field))
+            else:
+                self._fields[field].set_field(dot_string, v, getattr(self, field))
+        else:
+            setattr(self, field, self._fields[field].from_val(v))
 
     def validate(self):
         fields = [(field, getattr(self, name), name) for name, field in self._fields.iteritems()]
@@ -286,6 +311,14 @@ class BaseField(Common):
         self.help_text = help_text
         self.serialize = serialize
         self.internal = internal
+
+
+    @classmethod
+    def from_val(cls, v):
+        return v
+
+    def new_instance(self):
+        return None
 
     def get_key(self, positional=False):
         if isinstance(self.owner, BaseField):
