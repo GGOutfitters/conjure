@@ -123,6 +123,9 @@ class DocumentTest(unittest.TestCase):
         user.set_field('contacts.address.street', 'Forest Glen')
         self.assertTrue(user.contacts.address.street == 'Forest Glen')
 
+        user.set_field('contacts.create_time', u'12/20/1989')
+        self.assertTrue(type(user.contacts.create_time) == datetime.datetime)
+
         user.set_field('contacts.create_time', '12/20/1989')
         self.assertTrue(type(user.contacts.create_time) == datetime.datetime)
 
