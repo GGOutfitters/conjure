@@ -246,6 +246,18 @@ class BaseDocument(object):
 
         return deltas
 
+    def deltas(self):
+        deltas = {}
+        
+        print self._meta
+
+        for field_name in self._fields.keys():
+            field = self._fields[field_name]
+
+            field_deltas = field.deltas(getattr(self, field_name), getattr(self._base, field_name))
+            deltas.update({field_name: field_deltas})
+        return deltas
+
     def set_field(self, k, v):
         k = k.split('.', 1)
         field = k[0]
@@ -379,7 +391,12 @@ class BaseField(Common):
         if cur_val != j:
             delta = {'old': cur_val, 'new': j}
         return j, delta
-        pass
+
+    def deltas(self, cur, base):
+        delta = {}
+        if cur != base:
+            delta = {'old': base, 'new': cur}
+        return delta
 
     def validate(self, value):
         pass
