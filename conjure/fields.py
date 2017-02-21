@@ -146,7 +146,7 @@ class DateTimeField(BaseField):
             return None
         elif v == 'now':
             return datetime.datetime.now()
-        elif type(v) is str:
+        elif type(v) is str or type(v) is unicode:
             try:
                 date = dateutil.parser.parse(v)
                 return date
