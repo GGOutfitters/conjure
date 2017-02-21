@@ -267,6 +267,16 @@ class ListField(List, BaseField):
 
         return cur_val, deltas
 
+    def deltas(self, cur, base):
+        deltas = {}
+
+        for i in range(max(len(cur),len(base))):
+            delta = self.field.deltas(cur[i] if i < len(cur) else None, base[i] if i < len(base) else None)
+            if delta:
+                deltas[i]=delta
+        return deltas
+
+
     def set_field(self, k, v, cur_val):
         if not cur_val:
             cur_val = self.document()
@@ -455,6 +465,22 @@ class EmbeddedDocumentField(BaseField):
                 deltas[field_name] = 'unknown'
 
         return cur_val, deltas
+
+    def deltas(self, cur, base):
+        deltas = {}
+
+        if not cur:
+            cur = self.document()
+
+        for field_name in self.document._fields.keys():
+            field = self.document._fields[field_name]
+
+            field_deltas = field.deltas(getattr(cur, field_name), getattr(base, field_name) if base else None)
+
+            if field_deltas:
+                deltas.update({field_name: field_deltas})
+
+        return deltas
 
     def set_field(self, k, v, cur_val):
         if not cur_val:

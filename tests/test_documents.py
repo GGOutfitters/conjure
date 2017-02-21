@@ -71,6 +71,8 @@ class DocumentTest(unittest.TestCase):
             favorite_numbers = conjure.ListField(conjure.IntegerField())
             favorite_settings = conjure.ListField(conjure.DictField())
             history = conjure.ListField(conjure.EmbeddedDocumentField(UserHistoryItem))
+            class Meta:
+                track_changes=True
 
         user = User(name='Andrew',
                     age=30,

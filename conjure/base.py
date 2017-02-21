@@ -249,13 +249,12 @@ class BaseDocument(object):
     def deltas(self):
         deltas = {}
         
-        print self._meta
-
         for field_name in self._fields.keys():
             field = self._fields[field_name]
 
             field_deltas = field.deltas(getattr(self, field_name), getattr(self._base, field_name))
-            deltas.update({field_name: field_deltas})
+            if field_deltas:
+                deltas.update({field_name: field_deltas})
         return deltas
 
     def set_field(self, k, v):
