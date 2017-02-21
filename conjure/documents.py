@@ -2,6 +2,7 @@ from .base import BaseDocument, DocumentMeta, ObjectIdField
 from .exceptions import OperationError
 from .query import Query
 import pymongo.errors
+import copy
 
 __all__ = ['Document', 'EmbeddedDocument']
 
@@ -11,6 +12,14 @@ class Document(BaseDocument):
 
     id = ObjectIdField(db_field='_id')
     objects = Query(None, None)
+
+    _base = {}
+
+    def __init__(self, **data):
+        super(Document, self).__init__(**data)
+        if self._meta['track_changes']:
+            self._base = copy.deepcopy(self)
+            
 
     def save(self, insert=False):
         self.validate()

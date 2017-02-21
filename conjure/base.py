@@ -26,7 +26,8 @@ class DocumentMeta(type):
             'verbose_name_plural': name.lower() + 's',
             'collection': name.lower() + 's',
             'indexes': [],
-            'embedded': False
+            'embedded': False,
+            'track_changes': False
         }
 
         for base in bases:

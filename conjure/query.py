@@ -80,6 +80,9 @@ class Query(object):
             for eagerload in self._eagerloads:
                 eagerload.add_documents(obj)
                 eagerload.flush()
+                
+            if self._document_cls._meta['track_changes']:
+                obj._base = copy.deepcopy(obj)
 
         return obj
 

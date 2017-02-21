@@ -9,6 +9,8 @@ class QueryTest(unittest.TestCase):
         class User(documents.Document):
             name = fields.StringField()
             age = fields.IntegerField()
+            class Meta:
+                track_changes = True
 
         self.User = User
 
@@ -448,6 +450,15 @@ class QueryTest(unittest.TestCase):
         obs = obs.filter(TextHolder.data.icontains('ello'))
 
         self.assertEqual(len(obs), 2)
+
+    def test_change_tracking(self):
+        user = self.User(name='Andrew', age=31)
+        user.save()
+
+        user = self.User.objects.filter(self.User.name=='Andrew').one()
+
+        user.name = 'Tom'
+        self.assertEqual(user._base.name, 'Andrew')
 
     def tearDown(self):
         self.User.drop_collection()
