@@ -184,6 +184,9 @@ class BaseDocument(object):
                 if field.db_field in data:
                     doc._data[field.name] = field.to_python(data[field.db_field])
 
+            if 'track_changes' in cls._meta and cls._meta['track_changes']:
+                doc._base = copy.deepcopy(doc)
+
             return doc
 
         return data

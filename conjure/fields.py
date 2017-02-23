@@ -270,8 +270,8 @@ class ListField(List, BaseField):
     def deltas(self, cur, base):
         deltas = {}
 
-        for i in range(max(len(cur),len(base))):
-            delta = self.field.deltas(cur[i] if i < len(cur) else None, base[i] if i < len(base) else None)
+        for i in range(max(len(cur),len(base) if base else 0)):
+            delta = self.field.deltas(cur[i] if i < len(cur) else None, base[i] if i < base and len(base) else None)
             if delta:
                 deltas[i]=delta
         return deltas
