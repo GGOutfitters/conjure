@@ -157,6 +157,53 @@ class DocumentTest(unittest.TestCase):
             user.set_field('this_does_not_exist', 'thing')
         self.assertRaises(KeyError, invalid_path_test)
 
+
+    def test_deltas(self):
+        class Error(conjure.EmbeddedDocument):
+            timestamp = conjure.DateTimeField(default=lambda: datetime.datetime.now())
+            msg = conjure.StringField(required=True)
+            origin = conjure.StringField(required=True)
+            trace = conjure.StringField(required=True)
+            code = conjure.StringField(required=True)
+
+        class Order(conjure.Document):
+            errors = conjure.ListField(conjure.EmbeddedDocumentField(Error))
+            status = conjure.StringField(default='submitted',
+                                         required=True,
+                                         choices=['submitted', 'processing', 'shipped'])
+
+            class Meta:
+                track_changes = True
+
+        def create_error(err_code):
+            return Error(
+                    timestamp=datetime.datetime.now(),
+                    msg='test msg',
+                    origin='Numen',
+                    trace='None',
+                    code=err_code
+                )
+
+        order = Order(
+            status='submitted',
+            errors=[create_error('PENNY_ORDER')]
+        )
+        order.errors.append(create_error('RUN_SHORT'))
+        deltas = order.deltas()
+
+        self.assertTrue('errors' in deltas)
+        self.assertTrue(len(deltas['errors']) == 1)
+
+        order2 = Order(
+            status='submitted',
+            errors=[create_error('PENNY_ORDER'), create_error('RUN_SHORT')]
+        )
+        order2.errors = [error for error in order.errors if error.code == 'RUN_SHORT']
+        deltas2 = order2.deltas()
+
+        self.assertTrue('errors' in deltas2)
+        self.assertTrue(len(deltas2['errors']) == 2)
+
     def test_get_superclasses(self):
         class Animal(Document): pass
         class Fish(Animal): pass
