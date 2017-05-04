@@ -192,7 +192,8 @@ class DocumentTest(unittest.TestCase):
         deltas = order.deltas()
 
         self.assertTrue('errors' in deltas)
-        self.assertTrue(len(deltas['errors']) == 1)
+        self.assertTrue(len(deltas['errors']['added']) == 1)
+        self.assertTrue(len(deltas['errors']['removed']) == 0)
 
         order2 = Order(
             status='submitted',
@@ -202,7 +203,8 @@ class DocumentTest(unittest.TestCase):
         deltas2 = order2.deltas()
 
         self.assertTrue('errors' in deltas2)
-        self.assertTrue(len(deltas2['errors']) == 2)
+        self.assertTrue(len(deltas2['errors']['added']) == 0)
+        self.assertTrue(len(deltas2['errors']['removed']) == 1)
 
     def test_get_superclasses(self):
         class Animal(Document): pass

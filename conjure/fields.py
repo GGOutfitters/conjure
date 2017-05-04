@@ -268,7 +268,12 @@ class ListField(List, BaseField):
         return cur_val, deltas
 
     def deltas(self, cur, base):
-        deltas = {}
+        cur_list = [x.to_json() for x in cur]
+        base_list = [x.to_json() for x in base]
+        deltas = {
+            'added': [x for x in cur if x.to_json() not in base_list],
+            'removed': [x for x in base if x.to_json() not in cur_list]
+        }
 
         for i in range(max(len(cur),len(base) if base else 0)):
             delta = self.field.deltas(cur[i] if i < len(cur) else None, base[i] if base and i < len(base) else None)
