@@ -168,6 +168,7 @@ class DocumentTest(unittest.TestCase):
 
         class Order(conjure.Document):
             errors = conjure.ListField(conjure.EmbeddedDocumentField(Error))
+            item_ids = conjure.ListField(conjure.StringField())
             status = conjure.StringField(default='submitted',
                                          required=True,
                                          choices=['submitted', 'processing', 'shipped'])
@@ -186,14 +187,18 @@ class DocumentTest(unittest.TestCase):
 
         order = Order(
             status='submitted',
+            item_ids=['item1', 'item2', 'item3'],
             errors=[create_error('PENNY_ORDER')]
         )
         order.errors.append(create_error('RUN_SHORT'))
+        order.item_ids.append('item4')
         deltas = order.deltas()
 
         self.assertTrue('errors' in deltas)
         self.assertTrue(len(deltas['errors']['added']) == 1)
         self.assertTrue(len(deltas['errors']['removed']) == 0)
+        self.assertTrue(len(deltas['item_ids']['added']) == 1)
+        self.assertTrue('item4' in deltas['item_ids']['added'])
 
         order2 = Order(
             status='submitted',
