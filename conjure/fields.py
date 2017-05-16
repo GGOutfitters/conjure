@@ -274,6 +274,11 @@ class ListField(List, BaseField):
             except:
                 return _x
 
+        if not cur:
+            cur = []
+        if not base:
+            base = []
+
         cur_list = [_convert_json(x) for x in cur]
         base_list = [_convert_json(x) for x in base]
 

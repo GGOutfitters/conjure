@@ -166,9 +166,15 @@ class DocumentTest(unittest.TestCase):
             trace = conjure.StringField(required=True)
             code = conjure.StringField(required=True)
 
+        class Shipment(conjure.EmbeddedDocument):
+            id = conjure.StringField()
+            shipping_method = conjure.StringField()
+            tracking = conjure.StringField()
+
         class Order(conjure.Document):
             errors = conjure.ListField(conjure.EmbeddedDocumentField(Error))
             item_ids = conjure.ListField(conjure.StringField())
+            shipments = conjure.ListField(conjure.EmbeddedDocumentField(Shipment))
             status = conjure.StringField(default='submitted',
                                          required=True,
                                          choices=['submitted', 'processing', 'shipped'])
@@ -192,6 +198,7 @@ class DocumentTest(unittest.TestCase):
         )
         order.errors.append(create_error('RUN_SHORT'))
         order.item_ids.append('item4')
+        order.shipments.append(Shipment(id='123', shipping_method='UPS_GND'))
         deltas = order.deltas()
 
         self.assertTrue('errors' in deltas)
@@ -199,6 +206,7 @@ class DocumentTest(unittest.TestCase):
         self.assertTrue(len(deltas['errors']['removed']) == 0)
         self.assertTrue(len(deltas['item_ids']['added']) == 1)
         self.assertTrue('item4' in deltas['item_ids']['added'])
+        self.assertTrue(len(deltas['shipments']['added']) == 1)
 
         order2 = Order(
             status='submitted',
