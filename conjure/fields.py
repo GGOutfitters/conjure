@@ -613,7 +613,7 @@ class ReferenceField(BaseField, Reference):
         new_doc = self.document_cls()
 
         id_val = j
-        if type(j) == dict:
+        if isinstance(j, dict):
             id_val = j['id']
 
         q = self.document_cls.objects.filter_by(id=id_val).one()
