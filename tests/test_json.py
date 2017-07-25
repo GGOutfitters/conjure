@@ -169,6 +169,13 @@ class JsonTest(unittest.TestCase):
         self.assertEqual(old_json, new_json)
 
 
+        #check that a list of keys works on from_json with reference fields
+        new_json['ref_list1'] = ['1','2']
+        
+        user.from_json(new_json)
+
+        self.assertEqual(old_json, user.to_json())
+
         #check that removing keys from json removes them
         #from the generated object
         mod_json = user.to_json()

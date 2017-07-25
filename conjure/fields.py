@@ -612,6 +612,10 @@ class ReferenceField(BaseField, Reference):
     def from_json(self, j, cur_val):
         new_doc = self.document_cls()
 
-        deltas = new_doc.from_json(j)
+        id_val = j
+        if type(j) == dict:
+            id_val = j['id']
 
-        return new_doc, deltas
+        q = self.document_cls.objects.filter_by(id=id_val).one()
+        
+        return q, {}
