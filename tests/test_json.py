@@ -99,6 +99,11 @@ class JsonTest(unittest.TestCase):
 
 
     def test_unmarshal(self):
+
+        class UserReferenceItem(conjure.Document):
+            id = conjure.StringField()
+            val = conjure.StringField()
+
         class UserHistoryItem(conjure.EmbeddedDocument):
             timestamp = conjure.DateTimeField()
             note = conjure.StringField()
@@ -122,6 +127,10 @@ class JsonTest(unittest.TestCase):
             favorite_foods = conjure.ListField(conjure.StringField())
             favorite_numbers = conjure.ListField(conjure.IntegerField())
             history = conjure.ListField(conjure.EmbeddedDocumentField(UserHistoryItem))
+
+            ref_list1 = conjure.ListField(conjure.ReferenceField(UserReferenceItem), default=[])
+
+            ref1 = conjure.ReferenceField(UserReferenceItem)
             
 
         user = User(name='Andrew',
@@ -141,11 +150,21 @@ class JsonTest(unittest.TestCase):
                                            )]
                     
         )
-        
+
+        ref = UserReferenceItem(id='1',val='asdf')
+        ref.save()
+        user.ref_list1.append(ref)
+        ref = UserReferenceItem(id='2',val='ghjkl;')
+        ref.save()
+        user.ref_list1.append(ref)
+
+        user.ref1 = ref
 
         #check that marshal/unmarshal returns the same json
+        self.maxDiff = None
         old_json = user.to_json()
         user.from_json(user.to_json())
+
         new_json = user.to_json()
         self.assertEqual(old_json, new_json)
 

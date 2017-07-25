@@ -608,3 +608,10 @@ class ReferenceField(BaseField, Reference):
 
     def lookup_member(self, name):
         return self.document_cls._fields.get(name)
+
+    def from_json(self, j, cur_val):
+        new_doc = self.document_cls()
+
+        deltas = new_doc.from_json(j)
+
+        return new_doc, deltas
