@@ -133,7 +133,7 @@ class DateTimeField(BaseField):
     def from_json(self, j, cur_val):
         deltas = {}
 
-        dt = datetime.datetime.fromtimestamp(j)
+        dt = None if j is None else datetime.datetime.fromtimestamp(j)
 
         if dt != cur_val:
             deltas = {'old': cur_val, 'new': dt}
