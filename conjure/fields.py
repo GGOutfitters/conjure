@@ -116,6 +116,8 @@ class FloatField(IntegerField):
 
 class BooleanField(BaseField):
     def to_python(self, value):
+        if value is None:
+            return None
         return bool(value)
 
     def validate(self, value):

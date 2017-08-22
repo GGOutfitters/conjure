@@ -4,6 +4,18 @@ import json
 import datetime
 
 class JsonTest(unittest.TestCase):
+    def test_boolean(self):
+        class User(conjure.Document):
+            name = conjure.StringField()
+            is_active = conjure.BooleanField()
+
+        User.drop_collection()
+        
+        u = User(name = 'Andrew')
+        u_json = u.to_json()
+
+        self.assertFalse('is_active' in u_json)
+
     def test_json(self):
         class User(conjure.Document):
             name = conjure.StringField()
