@@ -215,3 +215,7 @@ class JsonTest(unittest.TestCase):
         self.assertTrue(user.history[1].note == 'new note')
         self.assertTrue(user.favorite_foods[-1] == 'tacos')
         self.assertTrue(user.favorite_numbers[-1] == 42)
+
+        mod_json['create_time'] = None
+        user.from_json(mod_json)
+        self.assertTrue(user.create_time is None)
