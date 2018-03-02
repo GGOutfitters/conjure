@@ -132,7 +132,7 @@ class DateTimeField(BaseField):
         if isinstance(value, datetime.datetime):
             return int(time.mktime(value.timetuple()))
 
-    def from_json(self, j, cur_val):
+    def from_json(self, j, cur_val, update=False):
         deltas = {}
 
         dt = None if j is None else datetime.datetime.fromtimestamp(j)
@@ -250,7 +250,7 @@ class ListField(List, BaseField):
     def to_json(self, value, external=False):
         return [self.field.to_json(item, external=external) for item in value]
 
-    def from_json(self, j, cur_val):
+    def from_json(self, j, cur_val, update=False):
         deltas = {}
 
         #first trim cur_val to the length of input
@@ -263,7 +263,7 @@ class ListField(List, BaseField):
         #TODO: make deltas for anything deleted
 
         for i, val in enumerate(j):
-            new_val, delta = self.field.from_json(val, cur_val[i] if i < len(cur_val) else None)
+            new_val, delta = self.field.from_json(val, cur_val[i] if i < len(cur_val) else None, update)
             cur_val[i] = new_val
             deltas[i]=delta
 
@@ -458,7 +458,7 @@ class EmbeddedDocumentField(BaseField):
         if isinstance(value, self.document):
             return value.__class__.to_json(value, external=external)
 
-    def from_json(self, j, cur_val):
+    def from_json(self, j, cur_val, update=False):
         deltas = {}
 
         if not cur_val:
@@ -469,12 +469,12 @@ class EmbeddedDocumentField(BaseField):
 
             if field_name in j:
 
-                new_val, field_deltas = field.from_json(j[field_name], getattr(cur_val, field_name))
+                new_val, field_deltas = field.from_json(j[field_name], getattr(cur_val, field_name), update)
 
                 if field_name not in cur_val._data or new_val != cur_val._data[field_name]:
                     deltas.update({field_name: field_deltas})
                     cur_val._data[field_name] = new_val
-            else:
+            elif not update:
                 if field_name in cur_val._data:
                     del cur_val._data[field_name]
                     deltas[field_name] = 'deleted'
@@ -611,7 +611,7 @@ class ReferenceField(BaseField, Reference):
     def lookup_member(self, name):
         return self.document_cls._fields.get(name)
 
-    def from_json(self, j, cur_val):
+    def from_json(self, j, cur_val, update=False):
         new_doc = self.document_cls()
 
         id_val = j

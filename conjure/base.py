@@ -230,16 +230,16 @@ class BaseDocument(object):
 
         return j
 
-    def from_json(self, j):
+    def from_json(self, j, update=False):
         deltas = {}
         for field_name in self._fields.keys():
             field = self._fields[field_name]
 
             if field_name in j:
-                new_val, field_deltas = field.from_json(j[field_name], getattr(self, field_name))
+                new_val, field_deltas = field.from_json(j[field_name], getattr(self, field_name), update)
                 deltas.update({field_name: field_deltas})
                 setattr(self, field_name, new_val)
-            elif hasattr(self, field_name):
+            elif hasattr(self, field_name) and not update:
                 delattr(self, field_name)
                 deltas[field_name] = 'deleted'
 
@@ -388,7 +388,7 @@ class BaseField(Common):
     def to_json(self, value, external=False):
         return self.to_python(value)
 
-    def from_json(self, j, cur_val):
+    def from_json(self, j, cur_val, update=False):
         delta = {}
         if cur_val != j:
             delta = {'old': cur_val, 'new': j}

@@ -6,6 +6,7 @@ from conjure.fields import StringField, IntegerField, ReferenceField, DateTimeFi
 from conjure.exceptions import ValidationError
 from conjure.utils import Alias
 import bson
+import uuid
 
 class DocumentTest(unittest.TestCase):
     def setUp(self):
@@ -58,6 +59,7 @@ class DocumentTest(unittest.TestCase):
             weight = conjure.StringField()
 
         class User(conjure.Document):
+            id = conjure.StringField(db_field='_id', default=lambda: str(uuid.uuid4()))
             name = conjure.StringField()
             age = conjure.IntegerField()
             salary = conjure.FloatField()
