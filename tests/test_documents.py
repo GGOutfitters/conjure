@@ -174,6 +174,7 @@ class DocumentTest(unittest.TestCase):
             tracking = conjure.StringField()
 
         class Order(conjure.Document):
+            create_time = conjure.DateTimeField(default=lambda: datetime.datetime.now())
             errors = conjure.ListField(conjure.EmbeddedDocumentField(Error))
             item_ids = conjure.ListField(conjure.StringField())
             file_ids = conjure.ListField(conjure.StringField())
@@ -204,6 +205,7 @@ class DocumentTest(unittest.TestCase):
         order.item_ids.append('item4')
         order.shipments.append(Shipment(id='123', shipping_method='UPS_GND'))
         deltas = order.deltas()
+
 
         self.assertTrue('errors' in deltas)
         self.assertTrue(len(deltas['errors']['added']) == 1)

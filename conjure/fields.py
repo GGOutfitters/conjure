@@ -137,10 +137,26 @@ class DateTimeField(BaseField):
 
         dt = None if j is None else datetime.datetime.fromtimestamp(j)
 
-        if dt != cur_val:
-            deltas = {'old': cur_val, 'new': dt}
+        dt_compare = int(time.mktime(dt.timetuple())) if dt else None
+        cur_val_compare = int(time.mktime(cur_val.timetuple())) if cur_val else None
+        if dt_compare != cur_val_compare:
+            deltas = {
+                'old': cur_val_compare,
+                'new': dt_compare
+            }
 
         return dt, deltas
+
+    def deltas(self, cur, base):
+        delta = {}
+        dt_compare = int(time.mktime(base.timetuple())) if base else None
+        cur_val_compare = int(time.mktime(cur.timetuple())) if cur else None
+        if dt_compare != cur_val_compare:
+            delta = {
+                'old': cur_val_compare,
+                'new': dt_compare
+            }
+        return delta
 
     @classmethod
     def from_val(cls, v):
