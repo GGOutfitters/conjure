@@ -10,7 +10,7 @@ class JsonTest(unittest.TestCase):
             is_active = conjure.BooleanField()
 
         User.drop_collection()
-        
+
         u = User(name = 'Andrew')
         u_json = u.to_json()
 
@@ -80,7 +80,7 @@ class JsonTest(unittest.TestCase):
             salary = conjure.FloatField(internal=True)
             prefs = conjure.EmbeddedDocumentField(UserPreferences, internal=True)
             contacts = conjure.EmbeddedDocumentField(UserContacts)
-            
+
 
         user = User(name='Andrew',
                     age=30,
@@ -92,7 +92,7 @@ class JsonTest(unittest.TestCase):
 
         user_json_internal = user.to_json()
         user_json_external = user.to_json(external=True)
-        
+
         self.assertEqual(user.name, user_json_internal['name'])
         self.assertEqual(user.name, user_json_external['name'])
 
@@ -143,7 +143,7 @@ class JsonTest(unittest.TestCase):
             ref_list1 = conjure.ListField(conjure.ReferenceField(UserReferenceItem), default=[])
 
             ref1 = conjure.ReferenceField(UserReferenceItem)
-            
+
 
         user = User(name='Andrew',
                     age=30,
@@ -160,7 +160,7 @@ class JsonTest(unittest.TestCase):
                                                note='some note',
                                                tags=['a','b','c']
                                            )]
-                    
+
         )
 
         ref = UserReferenceItem(id='1',val='asdf')
@@ -183,7 +183,7 @@ class JsonTest(unittest.TestCase):
 
         #check that a list of keys works on from_json with reference fields
         new_json['ref_list1'] = ['1','2']
-        
+
         user.from_json(new_json)
 
         self.assertEqual(old_json, user.to_json())
@@ -209,7 +209,7 @@ class JsonTest(unittest.TestCase):
         mod_json['history'][1]['note']='new note'
         mod_json['favorite_foods'].append('tacos')
         mod_json['favorite_numbers'].append(42)
-        
+
         delta = user.from_json(mod_json)
 
         self.assertTrue(user.history[1].note == 'new note')
@@ -226,4 +226,3 @@ class JsonTest(unittest.TestCase):
         self.assertTrue(user.history[1].note == 'new note')
         self.assertTrue(user.favorite_foods[-1] == 'tacos')
         self.assertTrue(user.favorite_numbers[-1] == 42)
-

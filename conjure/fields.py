@@ -255,7 +255,7 @@ class ListField(List, BaseField):
 
         #first trim cur_val to the length of input
         del cur_val[len(j):]
-        
+
         #expand cur_val to the length of input
         while len(cur_val) < len(j):
             cur_val.append(None)
@@ -285,14 +285,17 @@ class ListField(List, BaseField):
         base_list = [_convert_json(x) for x in base]
 
         deltas = {
-            'added': [x for x in cur if _convert_json(x) not in base_list],
-            'removed': [x for x in base if _convert_json(x) not in cur_list]
+            'added': [_convert_json(x) for x in cur if _convert_json(x) not in base_list],
+            'removed': [_convert_json(x) for x in base if _convert_json(x) not in cur_list]
         }
+
+        if not deltas['added'] and not deltas['removed']:
+            deltas = {}
 
         for i in range(max(len(cur),len(base) if base else 0)):
             delta = self.field.deltas(cur[i] if i < len(cur) else None, base[i] if base and i < len(base) else None)
             if delta:
-                deltas[i]=delta
+                deltas[str(i)]=delta
         return deltas
 
 
@@ -619,5 +622,5 @@ class ReferenceField(BaseField, Reference):
             id_val = j['id']
 
         q = self.document_cls.objects.filter_by(id=id_val).one()
-        
+
         return q, {}
