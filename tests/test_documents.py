@@ -173,12 +173,16 @@ class DocumentTest(unittest.TestCase):
             shipping_method = conjure.StringField()
             tracking = conjure.StringField()
 
+        class Art(conjure.EmbeddedDocument):
+            hours = conjure.FloatField(default=0)
+
         class Order(conjure.Document):
             create_time = conjure.DateTimeField(default=lambda: datetime.datetime.now())
             errors = conjure.ListField(conjure.EmbeddedDocumentField(Error))
             item_ids = conjure.ListField(conjure.StringField())
             file_ids = conjure.ListField(conjure.StringField())
             shipments = conjure.ListField(conjure.EmbeddedDocumentField(Shipment))
+            art = conjure.EmbeddedDocumentField(Art)
             status = conjure.StringField(default='submitted',
                                          required=True,
                                          choices=['submitted', 'processing', 'shipped'])
@@ -206,13 +210,13 @@ class DocumentTest(unittest.TestCase):
         order.shipments.append(Shipment(id='123', shipping_method='UPS_GND'))
         deltas = order.deltas()
 
-
         self.assertTrue('errors' in deltas)
         self.assertTrue(len(deltas['errors']['added']) == 1)
         self.assertTrue(len(deltas['errors']['removed']) == 0)
         self.assertTrue(len(deltas['item_ids']['added']) == 1)
         self.assertTrue('item4' in deltas['item_ids']['added'])
         self.assertTrue(len(deltas['shipments']['added']) == 1)
+        self.assertTrue('art' not in deltas)
 
         order2 = Order(
             status='submitted',

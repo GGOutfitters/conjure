@@ -508,7 +508,10 @@ class EmbeddedDocumentField(BaseField):
         deltas = {}
 
         if not cur:
-            cur = self.document()
+            cur = self.get_default()
+
+        if not cur:
+            return deltas
 
         for field_name in self.document._fields.keys():
             field = self.document._fields[field_name]
