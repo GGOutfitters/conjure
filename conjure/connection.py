@@ -39,7 +39,4 @@ def connect(uri):
 
     db = _get_connection(uri)[database]
     
-    if username and password:
-        db.authenticate(username, password)
-
     return db
