@@ -173,10 +173,16 @@ class DocumentTest(unittest.TestCase):
             shipping_method = conjure.StringField()
             tracking = conjure.StringField()
 
+        class Art(conjure.EmbeddedDocument):
+            hours = conjure.FloatField(default=0)
+
         class Order(conjure.Document):
+            create_time = conjure.DateTimeField(default=lambda: datetime.datetime.now())
             errors = conjure.ListField(conjure.EmbeddedDocumentField(Error))
             item_ids = conjure.ListField(conjure.StringField())
+            file_ids = conjure.ListField(conjure.StringField())
             shipments = conjure.ListField(conjure.EmbeddedDocumentField(Shipment))
+            art = conjure.EmbeddedDocumentField(Art)
             status = conjure.StringField(default='submitted',
                                          required=True,
                                          choices=['submitted', 'processing', 'shipped'])
@@ -196,6 +202,7 @@ class DocumentTest(unittest.TestCase):
         order = Order(
             status='submitted',
             item_ids=['item1', 'item2', 'item3'],
+            file_ids=['file1', 'file2', 'file3'],
             errors=[create_error('PENNY_ORDER')]
         )
         order.errors.append(create_error('RUN_SHORT'))
@@ -209,6 +216,7 @@ class DocumentTest(unittest.TestCase):
         self.assertTrue(len(deltas['item_ids']['added']) == 1)
         self.assertTrue('item4' in deltas['item_ids']['added'])
         self.assertTrue(len(deltas['shipments']['added']) == 1)
+        self.assertTrue('art' not in deltas)
 
         order2 = Order(
             status='submitted',
@@ -260,7 +268,7 @@ class DocumentTest(unittest.TestCase):
         class Mammal(Animal): pass
         class Human(Mammal): pass
         class Dog(Mammal): pass
-        
+
         Animal.drop_collection()
 
         Animal().save()
@@ -331,7 +339,7 @@ class DocumentTest(unittest.TestCase):
         User.drop_collection()
 
         def create_invalid_user():
-            User(name='test').save() 
+            User(name='test').save()
 
         self.assertRaises(ValidationError, create_invalid_user)
 
@@ -345,7 +353,7 @@ class DocumentTest(unittest.TestCase):
         self.assertEqual(user_obj.id, 'test')
 
         user_son = User.objects._collection.find_one()
-        
+
         self.assertEqual(user_son['_id'], 'test')
         self.assertTrue('username' not in user_son)
 
@@ -475,7 +483,7 @@ class DocumentTest(unittest.TestCase):
     def test_save_custom_id(self):
         user = self.User(name='Test User', age=30, id='497ce96f395f2f052a494fd4')
         user.save()
-        
+
         user_obj = self.User.objects.find_one(self.User.name == 'Test User')
         self.assertEqual(str(user_obj['_id']), '497ce96f395f2f052a494fd4')
 
@@ -534,7 +542,7 @@ class DocumentTest(unittest.TestCase):
         author.save()
 
         post = BlogPost(content='Watched some TV today... how exciting.')
-        
+
         post.author = author
         post.save()
 

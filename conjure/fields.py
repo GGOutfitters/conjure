@@ -137,10 +137,26 @@ class DateTimeField(BaseField):
 
         dt = None if j is None else datetime.datetime.fromtimestamp(j)
 
-        if dt != cur_val:
-            deltas = {'old': cur_val, 'new': dt}
+        dt_compare = int(time.mktime(dt.timetuple())) if dt else None
+        cur_val_compare = int(time.mktime(cur_val.timetuple())) if cur_val else None
+        if dt_compare != cur_val_compare:
+            deltas = {
+                'old': cur_val_compare,
+                'new': dt_compare
+            }
 
         return dt, deltas
+
+    def deltas(self, cur, base):
+        delta = {}
+        dt_compare = int(time.mktime(base.timetuple())) if base else None
+        cur_val_compare = int(time.mktime(cur.timetuple())) if cur else None
+        if dt_compare != cur_val_compare:
+            delta = {
+                'old': cur_val_compare,
+                'new': dt_compare
+            }
+        return delta
 
     @classmethod
     def from_val(cls, v):
@@ -255,7 +271,7 @@ class ListField(List, BaseField):
 
         #first trim cur_val to the length of input
         del cur_val[len(j):]
-        
+
         #expand cur_val to the length of input
         while len(cur_val) < len(j):
             cur_val.append(None)
@@ -285,14 +301,17 @@ class ListField(List, BaseField):
         base_list = [_convert_json(x) for x in base]
 
         deltas = {
-            'added': [x for x in cur if _convert_json(x) not in base_list],
-            'removed': [x for x in base if _convert_json(x) not in cur_list]
+            'added': [_convert_json(x) for x in cur if _convert_json(x) not in base_list],
+            'removed': [_convert_json(x) for x in base if _convert_json(x) not in cur_list]
         }
+
+        if not deltas['added'] and not deltas['removed']:
+            deltas = {}
 
         for i in range(max(len(cur),len(base) if base else 0)):
             delta = self.field.deltas(cur[i] if i < len(cur) else None, base[i] if base and i < len(base) else None)
             if delta:
-                deltas[i]=delta
+                deltas[str(i)]=delta
         return deltas
 
 
@@ -489,7 +508,10 @@ class EmbeddedDocumentField(BaseField):
         deltas = {}
 
         if not cur:
-            cur = self.document()
+            cur = self.get_default()
+
+        if not cur:
+            return deltas
 
         for field_name in self.document._fields.keys():
             field = self.document._fields[field_name]
@@ -619,5 +641,5 @@ class ReferenceField(BaseField, Reference):
             id_val = j['id']
 
         q = self.document_cls.objects.filter_by(id=id_val).one()
-        
+
         return q, {}
