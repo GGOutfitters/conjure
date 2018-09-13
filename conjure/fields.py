@@ -613,6 +613,15 @@ class ReferenceField(BaseField, Reference):
         if isinstance(value, Document):
             return self.document_cls.to_json(value, external=external)
 
+    def deltas(self, cur, base):
+        delta = {
+            'old': base.to_json() if base else base,
+            'new': cur.to_json() if cur else cur
+        }
+        if delta['old'] == delta['new']:
+            return {}
+        return delta
+
     def validate(self, value):
         if isinstance(value, Document):
             assert isinstance(value, self.document_cls)

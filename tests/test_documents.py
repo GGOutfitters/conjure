@@ -161,6 +161,10 @@ class DocumentTest(unittest.TestCase):
 
 
     def test_deltas(self):
+        class DigitizationRequest(conjure.Document):
+            id = conjure.StringField(db_field='_id', required=True)
+            msg = conjure.StringField(required=True)
+
         class Error(conjure.EmbeddedDocument):
             timestamp = conjure.DateTimeField(default=lambda: datetime.datetime.now())
             msg = conjure.StringField(required=True)
@@ -182,6 +186,7 @@ class DocumentTest(unittest.TestCase):
             item_ids = conjure.ListField(conjure.StringField())
             file_ids = conjure.ListField(conjure.StringField())
             shipments = conjure.ListField(conjure.EmbeddedDocumentField(Shipment))
+            embroidery_id = conjure.ReferenceField(DigitizationRequest)
             art = conjure.EmbeddedDocumentField(Art)
             status = conjure.StringField(default='submitted',
                                          required=True,
@@ -199,11 +204,17 @@ class DocumentTest(unittest.TestCase):
                     code=err_code
                 )
 
+        dr = DigitizationRequest(
+            id='123',
+            msg='testing'
+        )
+
         order = Order(
             status='submitted',
             item_ids=['item1', 'item2', 'item3'],
             file_ids=['file1', 'file2', 'file3'],
-            errors=[create_error('PENNY_ORDER')]
+            errors=[create_error('PENNY_ORDER')],
+            embroidery_id='123'
         )
         order.errors.append(create_error('RUN_SHORT'))
         order.item_ids.append('item4')
@@ -217,6 +228,7 @@ class DocumentTest(unittest.TestCase):
         self.assertTrue('item4' in deltas['item_ids']['added'])
         self.assertTrue(len(deltas['shipments']['added']) == 1)
         self.assertTrue('art' not in deltas)
+        self.assertTrue('embroidery_id' not in deltas)
 
         order2 = Order(
             status='submitted',
