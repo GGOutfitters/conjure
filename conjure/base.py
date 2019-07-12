@@ -11,10 +11,9 @@ _documents = []
 
 class DocumentMeta(type):
     def __new__(cls, name, bases, attrs):
-        metaclass = attrs.get('__metaclass__')
         super_new = super(DocumentMeta, cls).__new__
 
-        if metaclass and issubclass(metaclass, DocumentMeta):
+        if name == 'Document' or name == 'EmbeddedDocument':
             return super_new(cls, name, bases, attrs)
 
         _fields = {}
