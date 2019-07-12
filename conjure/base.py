@@ -155,14 +155,14 @@ class BaseDocument(object):
 
     def __str__(self):
         try:
-            return str(self).encode('utf-8')
+            return str(self)
         except:
             doc_id = getattr(self, 'id', None)
 
             if doc_id:
                 return str(doc_id)
 
-            return '%s object' % self.__class__.__name__
+            return str('%s object' % self.__class__.__name__)
 
     @classmethod
     def to_python(cls, data):
