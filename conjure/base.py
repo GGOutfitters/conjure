@@ -4,6 +4,7 @@ from .query import Manager
 from operator import itemgetter
 import copy
 import bson
+import collections
 
 _documents = []
 
@@ -52,7 +53,7 @@ class DocumentMeta(type):
                 if hasattr(Meta, k):
                     _meta[k] = getattr(Meta, k)
 
-        for attr_name, attr_value in attrs.iteritems():
+        for attr_name, attr_value in attrs.items():
             if hasattr(attr_value, '__class__') and issubclass(attr_value.__class__, BaseField):
                 attr_value.name = attr_name
 
@@ -81,7 +82,7 @@ class DocumentMeta(type):
 
         new_cls = super_new(cls, name, bases, attrs)
 
-        for field in new_cls._fields.values():
+        for field in list(new_cls._fields.values()):
             field.owner = new_cls
             field.add_to_document(new_cls)
 
@@ -101,7 +102,7 @@ class BaseDocument(object):
         self._data = {}
         self._search_index = None
 
-        for attr_name, attr_value in data.iteritems():
+        for attr_name, attr_value in data.items():
             try:
                 setattr(self, attr_name, attr_value)
             except AttributeError:
@@ -151,16 +152,16 @@ class BaseDocument(object):
         return len(self._fields)
 
     def __repr__(self):
-        return u'<%s: %s>' % (self.__class__.__name__, unicode(self))
+        return '<%s: %s>' % (self.__class__.__name__, str(self))
 
     def __str__(self):
         try:
-            return unicode(self).encode('utf-8')
+            return str(self).encode('utf-8')
         except:
             doc_id = getattr(self, 'id', None)
 
             if doc_id:
-                return unicode(doc_id)
+                return str(doc_id)
 
             return '%s object' % self.__class__.__name__
 
@@ -180,7 +181,7 @@ class BaseDocument(object):
 
             doc = cls()
 
-            for field in cls._fields.itervalues():
+            for field in cls._fields.values():
                 if field.db_field in data:
                     doc._data[field.name] = field.to_python(data[field.db_field])
 
@@ -194,7 +195,7 @@ class BaseDocument(object):
     def to_mongo(self):
         doc = {}
 
-        for field_name, field in self._fields.iteritems():
+        for field_name, field in self._fields.items():
             value = self._data.get(field_name, None)
 
             if value is not None:
@@ -208,7 +209,7 @@ class BaseDocument(object):
     def to_json(self, only=None, methods=None, external=False):
         j = {}
 
-        only = only or self._fields.keys()
+        only = only or list(self._fields.keys())
 
         for field_name in only:
             field = self._fields[field_name]
@@ -232,7 +233,7 @@ class BaseDocument(object):
 
     def from_json(self, j, update=False):
         deltas = {}
-        for field_name in self._fields.keys():
+        for field_name in list(self._fields.keys()):
             field = self._fields[field_name]
 
             if field_name in j:
@@ -243,8 +244,8 @@ class BaseDocument(object):
                 delattr(self, field_name)
                 deltas[field_name] = 'deleted'
 
-        for field_name in j.keys():
-            if field_name not in self._fields.keys():
+        for field_name in list(j.keys()):
+            if field_name not in list(self._fields.keys()):
                 deltas[field_name] = 'unknown'
 
         return deltas
@@ -252,7 +253,7 @@ class BaseDocument(object):
     def deltas(self):
         deltas = {}
         
-        for field_name in self._fields.keys():
+        for field_name in list(self._fields.keys()):
             field = self._fields[field_name]
 
             field_deltas = field.deltas(getattr(self, field_name), getattr(self._base, field_name))
@@ -288,7 +289,7 @@ class BaseDocument(object):
             setattr(self, field, self._fields[field].from_val(v))
 
     def validate(self):
-        fields = [(field, getattr(self, name), name) for name, field in self._fields.iteritems()]
+        fields = [(field, getattr(self, name), name) for name, field in self._fields.items()]
 
         for field, value, name in fields:
             if value is not None:
@@ -373,7 +374,7 @@ class BaseField(Common):
 
     def get_default(self):
         if self.has_default():
-            if callable(self.default):
+            if isinstance(self.default, collections.Callable):
                 return self.default()
             return self.default
 
@@ -406,11 +407,11 @@ class BaseField(Common):
     def _validate(self, value):
         if self.choices:
             if len(self.choices) and isinstance(self.choices[0], tuple):
-                choices_list = map(itemgetter(0), self.choices)
+                choices_list = list(map(itemgetter(0), self.choices))
             else:
                 choices_list = self.choices
             if value not in choices_list:
-                raise ValidationError('Field %s: Value %s must be one of %s.' % (self.name, value, unicode(self.choices)))
+                raise ValidationError('Field %s: Value %s must be one of %s.' % (self.name, value, str(self.choices)))
 
         for validator in self.validators:
             validator(value)
@@ -444,9 +445,9 @@ class ObjectIdField(BaseField):
     def to_mongo(self, value):
         if value is not None and not isinstance(value, bson.objectid.ObjectId):
             try:
-                return bson.objectid.ObjectId(unicode(value))
-            except Exception, e:
-                raise ValidationError(unicode(e))
+                return bson.objectid.ObjectId(str(value))
+            except Exception as e:
+                raise ValidationError(str(e))
 
         return value
 
@@ -456,6 +457,6 @@ class ObjectIdField(BaseField):
 
     def validate(self, value):
         try:
-            bson.objectid.ObjectId(unicode(value))
+            bson.objectid.ObjectId(str(value))
         except bson.objectid.InvalidId:
             raise ValidationError('Invalid Object ID')

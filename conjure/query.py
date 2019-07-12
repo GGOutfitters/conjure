@@ -71,7 +71,7 @@ class Query(object):
 
     def eagerload(self, *fields, **kwargs):
         eagerload = Eagerload(kwargs.get('only'))
-        map(eagerload.add_field, fields)
+        list(map(eagerload.add_field, fields))
         self._eagerloads.append(eagerload)
         return self
 
@@ -115,7 +115,7 @@ class Query(object):
         return self
 
     def filter_by(self, **kwargs):
-        for k, v in kwargs.iteritems():
+        for k, v in list(kwargs.items()):
             self._spec &= getattr(self._document_cls, k).eq(v)
 
         return self
@@ -127,7 +127,7 @@ class Query(object):
         return self
 
     def exclude_by(self, **kwargs):
-        for k, v in kwargs.iteritems():
+        for k, v in list(kwargs.items()):
             self._spec &= ~getattr(self._document_cls, k).eq(v)
 
         return self
@@ -152,17 +152,17 @@ class Query(object):
 
     def in_bulk(self, object_ids):
         field = self._document_cls.id
-        return  dict([(doc.id, doc) for doc in self.filter(field.in_(map(field.to_mongo, object_ids)))])
+        return  dict([(doc.id, doc) for doc in self.filter(field.in_(list(map(field.to_mongo, object_ids))))])
 
-    def next(self):
+    def __next__(self):
         try:
-            obj = self._document_cls.to_python(self._cursor.next())
+            obj = self._document_cls.to_python(next(self._cursor))
 
             if not obj:
-                return self.next()
+                return next(self)
 
             return obj
-        except StopIteration, e:
+        except StopIteration as e:
             self.rewind()
             raise e
 
@@ -195,7 +195,7 @@ class Query(object):
         self._fields = {'_cls': 1}
 
         for expr in exprs:
-            if isinstance(expr, basestring):
+            if isinstance(expr, str):
                 try:
                     field = lookup_field(self._document_cls, expr)
                     self._fields[field.get_key(False)] = 1
@@ -230,8 +230,8 @@ class Query(object):
     def _update(self, update, upsert, multi):
         try:
             self._collection.update(self._compile_spec(), update, upsert=upsert, multi=multi)
-        except pymongo.errors.OperationFailure, err:
-            raise OperationError(unicode(err))
+        except pymongo.errors.OperationFailure as err:
+            raise OperationError(str(err))
 
     def update(self, update_spec):
         self._update(update_spec.compile(), False, True)

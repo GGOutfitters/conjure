@@ -2,7 +2,7 @@ import copy
 import types
 import collections
 import re
-try: import cPickle as pickle
+try: import pickle as pickle
 except ImportException: import pickle
 
 
@@ -11,7 +11,7 @@ class Specification(object):
         raise NotImplemented
 
     def __init__(self, expressions=None):
-        if type(expressions) == types.ListType:
+        if type(expressions) == list:
             self.expressions = {}
             self._set_expression(*expressions)
         elif expressions is not None:
@@ -114,7 +114,7 @@ class QuerySpecification(Specification):
             for op in ops:
                 last_key = '$' + op
 
-                if type(current) == types.DictType:
+                if type(current) == dict:
                     next = current[last_key] = current.get(last_key, {})
                 else:
                     path[-1] = current = {}
@@ -267,7 +267,7 @@ class Match(QuerySpecification):
 
         offset = len(expression[0]) + 1
 
-        for k, v in expressions.compile().iteritems():
+        for k, v in expressions.compile().items():
             expression[2][k[offset:]] = v
 
         QuerySpecification.__init__(self, expression)

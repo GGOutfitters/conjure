@@ -29,7 +29,7 @@ class StringField(String, BaseField):
 
     def to_python(self, value):
         if value is not None:
-            return unicode(value)
+            return str(value)
         return ''
 
     def to_json(self, value, external=False):
@@ -38,7 +38,7 @@ class StringField(String, BaseField):
         return None
 
     def validate(self, value):
-        assert isinstance(value, (str, unicode))
+        assert isinstance(value, str)
 
         if self.max_length is not None and len(value) > self.max_length:
             raise ValidationError('String field "%s" value is too long (%s max, but %s)' % (self.name, self.max_length, len(value)))
@@ -164,7 +164,7 @@ class DateTimeField(BaseField):
             return None
         elif v == 'now':
             return datetime.datetime.now()
-        elif type(v) is str or type(v) is unicode:
+        elif type(v) is str or type(v) is str:
             try:
                 date = dateutil.parser.parse(v)
                 return date
@@ -208,7 +208,7 @@ class DictField(BaseField):
         if not value:
             return self.get_default()
         json_dict = {}
-        for k,v in value.iteritems():
+        for k,v in value.items():
             if isinstance(v, datetime.datetime):
                 json_dict[k] = int(time.mktime(v.timetuple()))
             else:
@@ -343,7 +343,7 @@ class ListField(List, BaseField):
 
         try:
             [self.field.validate(item) for item in value]
-        except Exception, err:
+        except Exception as err:
             raise ValidationError('Invalid ListField item (%s)' % str(err))
 
     def add_to_document(self, cls):
@@ -380,22 +380,22 @@ class MapField(BaseField):
         BaseField.__init__(self, **kwargs)
 
     def to_python(self, value):
-        return dict((k, self.field.to_python(item)) for k, item in value.iteritems())
+        return dict((k, self.field.to_python(item)) for k, item in value.items())
 
     def to_mongo(self, value):
-        return dict((k, self.field.to_mongo(item)) for k, item in value.iteritems())
+        return dict((k, self.field.to_mongo(item)) for k, item in value.items())
 
     def to_json(self, value, external=False):
         value = value or {}
-        return dict((k, self.field.to_json(item, external=external)) for k, item in value.iteritems())
+        return dict((k, self.field.to_json(item, external=external)) for k, item in value.items())
 
     def validate(self, value):
         if not isinstance(value, dict):
             raise ValidationError('Only dict may be used in a map field')
 
         try:
-            [self.field.validate(item) for item in value.itervalues()]
-        except Exception, err:
+            [self.field.validate(item) for item in value.values()]
+        except Exception as err:
             raise ValidationError('Invalid MapField item (%s)' % str(err))
 
     def __getitem__(self, key):
@@ -418,7 +418,7 @@ class MapField(BaseField):
                                 left, _, right = name.rpartition(self.field.name)
                                 return left + self.get_key(True) + right
 
-                        e.expressions = dict((wrap(key), item) for key, item in e.expressions.iteritems())
+                        e.expressions = dict((wrap(key), item) for key, item in e.expressions.items())
 
                     new_expression = expressions[0]
 
@@ -483,7 +483,7 @@ class EmbeddedDocumentField(BaseField):
         if not cur_val:
             cur_val = self.document()
 
-        for field_name in self.document._fields.keys():
+        for field_name in list(self.document._fields.keys()):
             field = self.document._fields[field_name]
 
             if field_name in j:
@@ -498,8 +498,8 @@ class EmbeddedDocumentField(BaseField):
                     del cur_val._data[field_name]
                     deltas[field_name] = 'deleted'
 
-        for field_name in j.keys():
-            if field_name not in self.document._fields.keys():
+        for field_name in list(j.keys()):
+            if field_name not in list(self.document._fields.keys()):
                 deltas[field_name] = 'unknown'
 
         return cur_val, deltas
@@ -513,7 +513,7 @@ class EmbeddedDocumentField(BaseField):
         if not cur:
             return deltas
 
-        for field_name in self.document._fields.keys():
+        for field_name in list(self.document._fields.keys()):
             field = self.document._fields[field_name]
 
             field_deltas = field.deltas(getattr(cur, field_name), getattr(base, field_name) if base else None)

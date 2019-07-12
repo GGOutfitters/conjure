@@ -80,7 +80,7 @@ class Eagerload(object):
 
         if field.iterable:
             if isinstance(ids, dict):
-                gen = ids.viewitems()
+                gen = ids.items()
             else:
                 gen = enumerate(ids)
 
@@ -95,7 +95,7 @@ class Eagerload(object):
 
         mapping = self.mapping
         cls = self.document_cls
-        ids = mapping.keys()
+        ids = list(mapping.keys())
 
         cursor = cls.objects.filter(cls.id == ids[0] if len(ids) == 1 else cls.id.in_(ids))
 

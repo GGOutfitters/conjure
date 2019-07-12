@@ -7,9 +7,7 @@ import copy
 __all__ = ['Document', 'EmbeddedDocument']
 
 
-class Document(BaseDocument):
-    __metaclass__ = DocumentMeta
-
+class Document(BaseDocument, metaclass=DocumentMeta):
     id = ObjectIdField(db_field='_id')
     objects = Query(None, None)
 
@@ -33,8 +31,8 @@ class Document(BaseDocument):
                 object_id = collection.insert(doc)
             else:
                 object_id = collection.save(doc)
-        except pymongo.errors.OperationFailure, err:
-            raise OperationError(unicode(err))
+        except pymongo.errors.OperationFailure as err:
+            raise OperationError(str(err))
 
         self['id'] = object_id
 
@@ -44,14 +42,14 @@ class Document(BaseDocument):
 
         try:
             self.__class__.objects.filter_by(id=object_id).delete()
-        except pymongo.errors.OperationFailure, err:
-            raise OperationError(unicode(err))
+        except pymongo.errors.OperationFailure as err:
+            raise OperationError(str(err))
 
     def reload(self):
         data = self.__class__.objects.filter_by(id=self.id)._one()
 
         #noinspection PyUnresolvedReferences
-        for field in self.__class__._fields.values():
+        for field in list(self.__class__._fields.values()):
             if field.db_field in data:
                 self._data[field.name] = field.to_python(data[field.db_field])
 
@@ -60,6 +58,5 @@ class Document(BaseDocument):
         cls.objects._collection.drop()
 
 
-class EmbeddedDocument(BaseDocument):
-    __metaclass__ = DocumentMeta
+class EmbeddedDocument(BaseDocument, metaclass=DocumentMeta):
     _meta = {'embedded': True}

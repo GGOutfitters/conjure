@@ -176,7 +176,7 @@ class List(_Base):
         return UpdateSpecification(['addToSet', self.get_key(True), self.field.to_mongo(val)])
 
     def __add__(self, val):
-        if type(val) in [types.ListType, types.TupleType]:
+        if type(val) in [list, tuple]:
             return self.push_all(val)
         else:
             return self.push(val)
@@ -186,14 +186,14 @@ class List(_Base):
         return UpdateSpecification(['push', self.get_key(True), self.field.to_mongo(val)])
 
     def push_all(self, val):
-        if type(val) not in [types.ListType, types.TupleType]:
+        if type(val) not in [list, tuple]:
             raise TypeError()
 
-        map(self.field._validate, val)
-        return UpdateSpecification(['pushAll', self.get_key(True), map(self.field.to_mongo, val)])
+        list(map(self.field._validate, val))
+        return UpdateSpecification(['pushAll', self.get_key(True), list(map(self.field.to_mongo, val))])
 
     def __sub__(self, val):
-        if type(val) in [types.ListType, types.TupleType]:
+        if type(val) in [list, tuple]:
             return self.pull_all(val)
         else:
             return self.pull(val)
@@ -205,7 +205,7 @@ class List(_Base):
         return UpdateSpecification(['pull', self.get_key(True), val])
 
     def pull_all(self, val):
-        if type(val) not in [types.ListType, types.TupleType]:
+        if type(val) not in [list, tuple]:
             raise TypeError()
 
         return UpdateSpecification(['pullAll', self.get_key(True), val])

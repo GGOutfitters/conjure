@@ -24,7 +24,7 @@ class IndexMeta(type):
 
         terms = {}
 
-        for attr_name, attr_value in attrs.items():
+        for attr_name, attr_value in list(attrs.items()):
             if isinstance(attr_value, Term):
                 term = attr_value
 
@@ -57,9 +57,7 @@ class IndexMeta(type):
         return new_cls
 
 
-class Index(object):
-    __metaclass__ = IndexMeta
-
+class Index(object, metaclass=IndexMeta):
     def __init__(self):
         self._meta = self.__class__._meta
         self.model = self._meta['model']
@@ -111,7 +109,7 @@ class Indexer(object):
     def index_document(self, obj, bulk=False):
         doc = {}
 
-        for term in self.index.terms.values():
+        for term in list(self.index.terms.values()):
             if not term.index:
                 continue
 
@@ -141,9 +139,9 @@ class Indexer(object):
     def update(self, obj_id, raw):
         o = raw['o']
 
-        fields = self.index.terms.keys()
+        fields = list(self.index.terms.keys())
 
-        if o.has_key('$set') and len(set(fields) - set(o['$set'].keys())) < len(fields):
+        if '$set' in o and len(set(fields) - set(o['$set'].keys())) < len(fields):
             obj = self.index.model.objects.only(*fields).filter(self.index.spec).with_id(obj_id)
 
             if obj is not None:
@@ -217,7 +215,7 @@ def search(indexes, query, page=1, limit=5, filters=None):
     result_set = ResultSet()
     result_set.query = query
 
-    if isinstance(query, (str, unicode)):
+    if isinstance(query, str):
         if query.endswith(':'):
             query = query[:-1]
 
@@ -229,7 +227,7 @@ def search(indexes, query, page=1, limit=5, filters=None):
     if not isinstance(query, pyes.FilteredQuery) and filters:
         term_filter = pyes.TermFilter()
 
-        for field, value in filters.iteritems():
+        for field, value in filters.items():
             term_filter.add(field, value)
 
         query = pyes.FilteredQuery(query, term_filter)
@@ -274,7 +272,7 @@ def reindex(only=None):
 
         index.connection.create_index(index.namespace)
 
-        objects = index.model.objects.only(*index.terms.keys()).filter(index.spec)
+        objects = index.model.objects.only(*list(index.terms.keys())).filter(index.spec)
         count = objects.count()
 
         logging.info('%d object(s) from %s' % (count, index.namespace))
@@ -318,10 +316,10 @@ def watch():
         oplog_watcher.start()
 
     if len(hosts) > 1:
-        for uri, _indexes in hosts.items():
+        for uri, _indexes in list(hosts.items()):
             multiprocessing.Process(target=target, args=(uri, _indexes)).start()
     else:
-        target(*hosts.items()[0])
+        target(*list(hosts.items())[0])
 
     while True:
         time.sleep(1)
