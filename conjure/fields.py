@@ -263,6 +263,9 @@ class ListField(List, BaseField):
     def to_mongo(self, value):
         return [self.field.to_mongo(item) for item in value]
 
+    def from_val(self, value):
+        return [self.field.from_val(item) for item in value]
+
     def to_json(self, value, external=False):
         return [self.field.to_json(item, external=external) for item in value]
 
