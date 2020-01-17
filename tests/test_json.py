@@ -110,6 +110,19 @@ class JsonTest(unittest.TestCase):
 
 
 
+    def test_base64string(self):
+        class Audit(conjure.Document):
+            id = conjure.StringField(default=lambda: str(uuid.uuid4()))
+            user_id = conjure.StringField()
+            params = conjure.StringField()
+
+        aud = Audit(
+            user_id='aschultz',
+            params=b'gANjd2Vya3pldWcuZGF0YXN0cnVjdHVyZXMKSW1tdXRhYmxlTXVsdGlEaWN0CnEAXXEBhXECUnEDLg==')
+
+        aud.save()
+
+
     def test_unmarshal(self):
 
         class UserReferenceItem(conjure.Document):
